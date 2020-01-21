@@ -5,12 +5,12 @@ import (
 	"reflect"
 )
 
-type businessPipeline struct {
+type runnerPipeline struct {
 	Pipeline
 	mediator *Godiatr
 }
 
-func (ph *businessPipeline) Handle(request interface{}, params ...interface{}) (interface{}, error) {
+func (ph *runnerPipeline) Handle(request interface{}, params ...interface{}) (interface{}, error) {
 	// Check if request is nil or not
 	if request == nil {
 		panic(fmt.Sprintf("Godiatr request should not be null!"))
@@ -18,7 +18,7 @@ func (ph *businessPipeline) Handle(request interface{}, params ...interface{}) (
 
 	// Retrieve handler by Request
 	modelType := reflect.TypeOf(request)
-	handlerFunc := ph.mediator.registries[modelType]
+	handlerFunc := ph.mediator.handlers[modelType]
 	if handlerFunc == nil {
 		panic(fmt.Sprintf("Handler not found related to %s", modelType.Name()))
 	}
