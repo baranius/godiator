@@ -89,8 +89,7 @@ func (c *GetItemController) GetItem() {
 }
 ```
 
-#### Examples and more
-[Click here](https://github.com/baranx/godiatr/tree/master/examples/handler)
+#### [More >>>](https://github.com/baranx/godiatr/tree/master/examples/handler)
 
 ___
 
@@ -154,8 +153,7 @@ func (c *GetItemController) GetItem() {
 }
 ```
 
-#### Examples and more
-[Click here](https://github.com/baranx/godiatr/tree/master/examples/notification)
+#### [More >>>](https://github.com/baranx/godiatr/tree/master/examples/notification)
 
 ___
 
@@ -200,14 +198,13 @@ func RegisterPipelines() {
 }
 ```
 
-#### Examples and more
-[Click here](https://github.com/baranx/godiatr/tree/master/examples/pipelines)
+#### [More >>>](https://github.com/baranx/godiatr/tree/master/examples/pipelines)
 
 ___
 
 ## API
 
-#### Godiatr
+### Godiatr
 
 ##### RegisterPipeline(h IPipeline)
 
@@ -232,27 +229,32 @@ ___
 
 - **request:** `Handler's request model`
 - **params (optional):** `Optional list of objects`
-___
 
-#### Handler
+### Handler
 
 ##### Handle(request interface{}, params ...interface{}) (interface{}, error)
 
 - **request:** `Handler's request model`
 - **params (optional):** `Optional list of objects`
-___
 
-#### Notification
+### Notification
 
 ##### Notify(request interface{}, params ...interface{}) 
 
 - **request:** `Handler's request model`
 - **params (optional):** `Optional list of objects`
-___
 
-#### Pipeline
+### Pipeline
 
 ##### Handle(request interface{}, params ...interface{}) (interface{}, error) 
 
 - **request:** `Handler's request model`
 - **params (optional):** `Optional list of objects`
+
+## Tests
+
+You can download the git repository an run the test in the **example** folder for testing or debugging.
+
+## Contribution
+
+You're very welcome to contribute the project. Please feel free to contribute or asking questions. 
