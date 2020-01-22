@@ -24,9 +24,7 @@ func NewNotificationCallerHandler() interface{} {
 }
 
 func (h *NotificationCallerHandler) Handle(request *NotificationCallerRequest) (*NotificationCallerResponse, error) {
-	if err := h.g.Notify(request); err != nil {
-		return nil, err
-	}
+	h.g.Notify(request)
 
 	return &NotificationCallerResponse{ResponseString: request.PayloadString}, nil
 }
@@ -40,9 +38,7 @@ func NewNotification() interface{} {
 	return &Notification{}
 }
 
-func (n *Notification) Handle(request interface{}, params ...interface{}) error {
+func (n *Notification) Handle(request interface{}, params ...interface{}) {
 	r := request.(*NotificationCallerRequest)
 	fmt.Printf("Notification called with payload : '%v'", *r.PayloadString)
-
-	return nil
 }

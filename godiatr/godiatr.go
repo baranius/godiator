@@ -18,7 +18,7 @@ type (
 		RegisterHandler(request interface{}, handler func()interface{})
 		RegisterNotificationHandler(request interface{}, handler func()interface{})
 		Send(request interface{}, params ...interface{}) (interface{}, error)
-		Notify(request interface{}, params ...interface{}) error
+		Notify(request interface{}, params ...interface{})
 	}
 
 	Godiatr struct {
@@ -84,7 +84,7 @@ func (m *Godiatr) Send(request interface{}, params ...interface{}) (interface{},
 	}
 }
 
-func (m *Godiatr) Notify(request interface{}, params ...interface{}) error {
+func (m *Godiatr) Notify(request interface{}, params ...interface{}) {
 	// Check if request is nil or not
 	if request == nil {
 		panic(fmt.Sprintf("Godiatr request should not be null!"))
@@ -117,12 +117,6 @@ func (m *Godiatr) Notify(request interface{}, params ...interface{}) error {
 		}
 
 		// Call required method with given parameters
-		result := method.Call(inputs)
-
-		// Return result
-		if result[0].Interface() != nil {
-			return result[0].Interface().(error)
-		}
+		method.Call(inputs)
 	}
-	return nil
 }
