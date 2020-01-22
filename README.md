@@ -256,4 +256,3 @@ ___
 
 - **request:** `Handler's request model`
 - **params (optional):** `Optional list of objects`
-___
