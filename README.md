@@ -253,7 +253,7 @@ ___
 
 ## Tests
 
-You can download the git repository an run the test in the **example** folder for testing or debugging.
+You can download the git repository and run the tests in the **example** folder for testing or debugging.
 
 ## Contribution
 
