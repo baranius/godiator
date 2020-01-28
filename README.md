@@ -23,14 +23,14 @@ func NewGetItemController() *GetItemController {
 	return &GetItemController{g: godiatr.GetInstance()}
 }
 ```
-___
 
 ## Handlers
 
-Handlers are the main objects that runs your business logic.
+[Handlers](#handler) are the main objects that runs your business logic.
 
-#### Creating Handlers
-Creating a handler in godiatr requires a method named as **Handle**. Take a look to [API](#handler) reference for details.
+Creating a handler in godiatr requires a method named as **Handle**. 
+
+**Handle** method should get a request objects and return a tuple of response and error objects 
 
 ```go
 type (
@@ -55,50 +55,12 @@ func (h *SampleHandler) Handle(request *SampleRequest, params ...interface{}) (*
 }
 ```
 
-#### Registering Handlers
-
-You should call **RegisterHandler** method to register handlers. It takes request model reference
-and handler's initializer method as arguments.
-
-```go
-func RegisterHandlers() {
-    g := godiatr.GetInstance()
-    
-    g.RegisterHandler(&SampleRequest{}, NewSampleHandler)
-}
-```
-
-#### Calling Handlers 
-
-You should call **Send** method to run registered handlers. 
-
-```go
-type GetItemController struct {
-    g godiatr.IGodiatr
-}
-
-func NewGetItemController() *GetItemController {
-    return &GetItemController{g: godiatr.GetInstance()}
-}
-
-func (c *GetItemController) GetItem() {
-    payloadValue := "sample_value"
-    request := &SampleRequest{PayloadString: &payloadValue}
-    
-    response, err := c.g.Send(request)
-}
-```
-
-#### [More >>>](https://github.com/baranx/godiatr/tree/master/examples/handler)
-
+##### [Detailed Example](https://github.com/baranx/godiatr/tree/master/examples/handler)
 ___
 
 ## Notifications
 
-Notifications are observers. The way they run is quite similar to Pub-Sub. 
-
-#### Creating Notifications
-Creating a notification handler in godiatr requires a method named as **Handle**. Take a look to [API](#notification) for details
+[Notifications](#notification) are observers. The way they run is quite similar to Pub-Sub. 
 
 ```go
 type (
@@ -119,53 +81,13 @@ func (n *Notification) Handle(request interface{}, params ...interface{}) {
 }
 ```
 
-#### Registering Notifications
-
-You should call **RegisterNotificationHandler** method to register notification handlers. It takes request model reference
-and handler's initializer method as arguments.
-
-```go
-func RegisterHandlers() {
-    g := godiatr.GetInstance()
-    
-    g.RegisterNotificationHandler(&NotificationRequest{}, NewNotification)
-}
-```
-
-#### Calling Notifications 
-
-You should call **Notify** method to run registered notification handlers. 
-
-```go
-type GetItemController struct {
-    g godiatr.IGodiatr
-}
-
-func NewGetItemController() *GetItemController {
-    return &GetItemController{g: godiatr.GetInstance()}
-}
-
-func (c *GetItemController) GetItem() {
-    payloadValue := "sample_value"
-    request := &NotificationRequest{PayloadString: &payloadValue}
-    
-    c.g.Notify(request)
-}
-```
-
-#### [More >>>](https://github.com/baranx/godiatr/tree/master/examples/notification)
+##### [Detailed Example](https://github.com/baranx/godiatr/tree/master/examples/notification)
 
 ___
 
 ## Pipelines
 
-A pipeline is a method that runs before each godiatr handler. It's quite similar to interceptor design pattern.
-
-#### Creating Pipelines
-
-Pipelines should be derived from **godiatr.Pipeline** struct and include a **Handle** method just like handlers. . Take a look to [API](#pipeline) for details
-
-**Important!!! :** *Even though **params ...interface{}** is optional, you should define them in your Pipeline's Handle method*
+[Pipelines](#pipeline) are routines that runs before each godiatr handler. It's quite similar to interceptor design pattern.
 
 ```go 
 type ValidationPipeline struct {
@@ -183,24 +105,34 @@ func (p *ValidationPipeline) Handle(request interface{}, params ...interface{}) 
 }
 ```
 
-#### Registering Pipelines 
-
-You should call **RegisterPipeline** method to register pipelines.
-
 **Important!!! :** *Pipelines will run in the definition order.*
 
+##### [Detailed Example](https://github.com/baranx/godiatr/tree/master/examples/pipelines)
+
+## Mocking
+
+You can mock Send and Notify methods of **godiatr** via **MockGodiatr** in mock package.
+
+The only thing you need to do is delegating **OnSend** or **OnNotify** methods.
+
+
+#### OnSend
 ```go
-func RegisterPipelines() {
-    g := godiatr.GetInstance()
-    
-    g.RegisterPipeline(&ValidationPipeline{}) // This will run first
-    g.RegisterPipeline(&SomeOtherPipeline{}) // This will run second
+mockGodiatr.OnSend = func(request interface{}, params ...interface{}) (i interface{}, err error){
+    return &Response{}, nil
 }
 ```
 
-#### [More >>>](https://github.com/baranx/godiatr/tree/master/examples/pipelines)
+[Complete Example](https://github.com/baranx/godiatr/tree/master/examples/mocking/send)
 
-___
+#### OnNotify
+
+```go
+mockGodiatr.OnNotify = func(request interface{}, params ...interface{}) {
+    fmt.Print("Called")
+}
+```
+[Complete Example](https://github.com/baranx/godiatr/tree/master/examples/mocking/notify)
 
 ## API
 
@@ -250,10 +182,6 @@ ___
 
 - **request:** `Handler's request model`
 - **params (optional):** `Optional list of objects`
-
-## Tests
-
-You can download the git repository and run the tests in the **example** folder for testing or debugging.
 
 ## Contribution
 
