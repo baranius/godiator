@@ -17,18 +17,13 @@ func (ph *runnerPipeline) Handle(request interface{}, params ...interface{}) (in
 	}
 
 	// Retrieve handler by Request
-	modelType := reflect.TypeOf(request)
-	handlerFunc := ph.mediator.handlers[modelType]
-	if handlerFunc == nil {
-		panic(fmt.Sprintf("Handler not found related to %s", modelType.Name()))
-	}
-	handler := handlerFunc()
+	handler := ph.mediator.GetHandler(request)
 
-	// Initialiaze Handler
+	// Initialize Handler
 	handlerValue := reflect.ValueOf(handler)
 	method := handlerValue.MethodByName("Handle")
 	if method.Kind() != reflect.Func {
-		panic(fmt.Sprintf("Handle named function not found in %s", handlerValue.Type().Name()))
+		panic(fmt.Sprintf("'Handle' function not found in %s", handlerValue.Type().Name()))
 	}
 
 	// Iterate parameters

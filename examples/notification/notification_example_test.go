@@ -19,9 +19,9 @@ func TestNotificationSuite(t *testing.T) {
 func (s *NotificationTestSuite) SetupTest() {
 	s.g = godiatr.GetInstance()
 
-	s.g.RegisterHandler(&NotificationCallerRequest{}, NewNotificationCallerHandler)
+	s.g.Register(&NotificationCallerRequest{}, NewNotificationCallerHandler)
 
-	s.g.RegisterNotificationHandler(&NotificationCallerRequest{}, NewNotification)
+	s.g.RegisterNotification(&NotificationCallerRequest{}, NewNotification)
 }
 
 func (s *NotificationTestSuite) Test() {

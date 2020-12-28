@@ -14,9 +14,11 @@ var (
 // Define Struct
 type (
 	IGodiatr interface {
+		GetHandler(request interface{}) interface{}
+		GetHandlerResponse(request interface{}) interface{}
 		RegisterPipeline(h IPipeline)
-		RegisterHandler(request interface{}, handler func()interface{})
-		RegisterNotificationHandler(request interface{}, handler func()interface{})
+		Register(request interface{}, handler func()interface{})
+		RegisterNotification(request interface{}, handler func()interface{})
 		Send(request interface{}, params ...interface{}) (interface{}, error)
 		Notify(request interface{}, params ...interface{})
 	}
@@ -39,16 +41,48 @@ func GetInstance() *Godiatr {
 	return godiatr
 }
 
+func (m *Godiatr) GetHandler(request interface{}) interface{} {
+	modelType := reflect.TypeOf(request)
+	handlerFunc := m.handlers[modelType]
+	if handlerFunc == nil {
+		panic(fmt.Sprintf("Handler related to '%s' not found", modelType.Name()))
+	}
+
+	return handlerFunc()
+}
+
+func (m *Godiatr) GetHandlerResponse(request interface{}) interface{} {
+	handler := m.GetHandler(request)
+	handlerValue := reflect.ValueOf(handler)
+	method := handlerValue.MethodByName("Handle")
+	responseType := method.Type().Out(0)
+	responseTypeKind := responseType.Kind()
+	var pv interface{}
+
+	if responseTypeKind == reflect.Slice {
+		pv = reflect.MakeSlice(responseType, 0, 0).Interface()
+	} else if responseTypeKind == reflect.Struct {
+		pv = reflect.New(responseType).Interface()
+	} else if responseTypeKind == reflect.Ptr {
+		if responseType.Elem().Kind() == reflect.Struct {
+			pv = reflect.New(responseType.Elem()).Interface()
+		} else if responseType.Elem().Kind() == reflect.Slice {
+			pv = reflect.MakeSlice(responseType.Elem(), 0, 0).Interface()
+		}
+	}
+	return pv
+}
+
 // Apply Interface
+func (m *Godiatr) Register(request interface{}, handler func() interface{}) {
+	m.handlers[reflect.TypeOf(request)] = handler
+}
+
 func (m *Godiatr) RegisterPipeline(h IPipeline) {
 	m.pipelines = append(m.pipelines, h)
 }
 
-func (m *Godiatr) RegisterHandler(request interface{}, handler func() interface{}) {
-	m.handlers[reflect.TypeOf(request)] = handler
-}
-
-func (m *Godiatr) RegisterNotificationHandler(request interface{}, handler func() interface{}) {
+func (m *Godiatr) RegisterNotification(request interface{}, handler func() interface{}) {
 	handlers := m.notifications[reflect.TypeOf(request)]
 	handlers = append(handlers, handler)
 	m.notifications[reflect.TypeOf(request)] = handlers
@@ -95,17 +129,17 @@ func (m *Godiatr) Notify(request interface{}, params ...interface{}) {
 	notificationFunctions := m.notifications[modelType]
 
 	if notificationFunctions == nil {
-		panic(fmt.Sprintf("Handler not found related to %s", modelType.Name()))
+		panic(fmt.Sprintf("Handler related to '%s' not found", modelType.Name()))
 	}
 
 	for _, notificationFunc := range notificationFunctions {
 		handler := notificationFunc()
 
-		// Initialiaze Handler
+		// Initialize Handler
 		handlerValue := reflect.ValueOf(handler)
 		method := handlerValue.MethodByName("Handle")
 		if method.Kind() != reflect.Func {
-			panic(fmt.Sprintf("Handle named function not found in %s", handlerValue.Type().Name()))
+			panic(fmt.Sprintf("Handle function not found in %s", handlerValue.Type().Name()))
 		}
 
 		// Iterate parameters

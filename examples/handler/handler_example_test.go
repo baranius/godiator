@@ -19,7 +19,7 @@ func TestHandlerExampleSuite(t *testing.T){
 func (s *HandlerExampleTestSuite) SetupTest(){
 	s.g = godiatr.GetInstance()
 
-	s.g.RegisterHandler(&SampleRequest{}, NewSampleHandler)
+	s.g.Register(&SampleRequest{}, NewSampleHandler)
 }
 
 func (s *HandlerExampleTestSuite) Test() {

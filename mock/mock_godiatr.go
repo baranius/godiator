@@ -10,15 +10,23 @@ type MockGodiatr struct {
 	OnNotify OnNotify
 }
 
+func (mock *MockGodiatr) GetHandler(request interface{}) interface{} {
+	return nil
+}
+
+func (mock *MockGodiatr) GetHandlerResponse(request interface{}) interface{} {
+	return nil
+}
+
 func (mock *MockGodiatr) RegisterPipeline(h godiatr.IPipeline) {
 
 }
 
-func (mock *MockGodiatr) RegisterHandler(request interface{}, handler func()interface{}) {
+func (mock *MockGodiatr) Register(request interface{}, handler func()interface{}) {
 
 }
 
-func (mock *MockGodiatr) RegisterNotificationHandler(request interface{}, handler func()interface{}) {
+func (mock *MockGodiatr) RegisterNotification(request interface{}, handler func()interface{}) {
 
 }
 

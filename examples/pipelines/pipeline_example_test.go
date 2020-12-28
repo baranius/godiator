@@ -22,7 +22,7 @@ func (s *ValidationPipelineTestSuite) SetupTest(){
 
 	s.g.RegisterPipeline(&ValidationPipeline{})
 
-	s.g.RegisterHandler(&handler.SampleRequest{}, handler.NewSampleHandler)
+	s.g.Register(&handler.SampleRequest{}, handler.NewSampleHandler)
 }
 
 func (s *ValidationPipelineTestSuite) Test() {
