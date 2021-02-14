@@ -7,43 +7,31 @@ import (
 )
 
 var (
-	godiatr *Godiatr
-	once    sync.Once
+	gdtr *godiatr
+	once sync.Once
 )
 
 // Define Struct
-type (
-	IGodiatr interface {
-		GetHandler(request interface{}) interface{}
-		GetHandlerResponse(request interface{}) interface{}
-		RegisterPipeline(h IPipeline)
-		Register(request interface{}, handler func()interface{})
-		RegisterNotification(request interface{}, handler func()interface{})
-		Send(request interface{}, params ...interface{}) (interface{}, error)
-		Notify(request interface{}, params ...interface{})
-	}
-
-	Godiatr struct {
-		handlers      map[reflect.Type]func() interface{}
-		notifications map[reflect.Type][]func() interface{}
-		pipelines []IPipeline
-	}
-)
+type godiatr struct {
+	handlers      map[reflect.Type]func() interface{}
+	notifications map[reflect.Type][]func() interface{}
+	pipelines     []IPipeline
+}
 
 // Define Initialization Method
-func GetInstance() *Godiatr {
+func GetInstance() IGodiatr {
 	once.Do(func() {
-		godiatr = &Godiatr{
-			handlers: make(map[reflect.Type]func() interface{}),
+		gdtr = &godiatr{
+			handlers:      make(map[reflect.Type]func() interface{}),
 			notifications: make(map[reflect.Type][]func() interface{}),
 		}
 	})
-	return godiatr
+	return gdtr
 }
 
-func (m *Godiatr) GetHandler(request interface{}) interface{} {
+func (g *godiatr) GetHandler(request interface{}) interface{} {
 	modelType := reflect.TypeOf(request)
-	handlerFunc := m.handlers[modelType]
+	handlerFunc := g.handlers[modelType]
 	if handlerFunc == nil {
 		panic(fmt.Sprintf("Handler related to '%s' not found", modelType.Name()))
 	}
@@ -51,8 +39,8 @@ func (m *Godiatr) GetHandler(request interface{}) interface{} {
 	return handlerFunc()
 }
 
-func (m *Godiatr) GetHandlerResponse(request interface{}) interface{} {
-	handler := m.GetHandler(request)
+func (g *godiatr) GetHandlerResponse(request interface{}) interface{} {
+	handler := g.GetHandler(request)
 	handlerValue := reflect.ValueOf(handler)
 	method := handlerValue.MethodByName("Handle")
 	responseType := method.Type().Out(0)
@@ -74,36 +62,36 @@ func (m *Godiatr) GetHandlerResponse(request interface{}) interface{} {
 }
 
 // Apply Interface
-func (m *Godiatr) Register(request interface{}, handler func() interface{}) {
-	m.handlers[reflect.TypeOf(request)] = handler
+func (g *godiatr) Register(request interface{}, handler func() interface{}) {
+	g.handlers[reflect.TypeOf(request)] = handler
 }
 
-func (m *Godiatr) RegisterPipeline(h IPipeline) {
-	m.pipelines = append(m.pipelines, h)
+func (g *godiatr) RegisterPipeline(h IPipeline) {
+	g.pipelines = append(g.pipelines, h)
 }
 
-func (m *Godiatr) RegisterNotification(request interface{}, handler func() interface{}) {
-	handlers := m.notifications[reflect.TypeOf(request)]
+func (g *godiatr) RegisterNotification(request interface{}, handler func() interface{}) {
+	handlers := g.notifications[reflect.TypeOf(request)]
 	handlers = append(handlers, handler)
-	m.notifications[reflect.TypeOf(request)] = handlers
+	g.notifications[reflect.TypeOf(request)] = handlers
 }
 
-func (m *Godiatr) Send(request interface{}, params ...interface{}) (interface{}, error) {
+func (g *godiatr) Send(request interface{}, params ...interface{}) (interface{}, error) {
 	// Initialize an anonymous handler
-	runnerPipeline := new(runnerPipeline)
-	runnerPipeline.mediator = m
+	runnerPipeline := new(executionPipeline)
+	runnerPipeline.gdtr = g
 
-	if len(m.pipelines) > 0 {
+	if len(g.pipelines) > 0 {
 		// Loop through pipelines by reverse if exists and bind them to each other
 		var mainPipeline IPipeline
-		for i := len(m.pipelines) - 1; i >= 0; i-- {
-			if i == len(m.pipelines)-1 {
-				pipeline := m.pipelines[i]
+		for i := len(g.pipelines) - 1; i >= 0; i-- {
+			if i == len(g.pipelines)-1 {
+				pipeline := g.pipelines[i]
 				pipeline.SetNext(runnerPipeline)
-				mainPipeline = m.pipelines[i]
+				mainPipeline = g.pipelines[i]
 			} else {
-				m.pipelines[i].SetNext(mainPipeline)
-				mainPipeline = m.pipelines[i]
+				g.pipelines[i].SetNext(mainPipeline)
+				mainPipeline = g.pipelines[i]
 			}
 		}
 		if mainPipeline != nil {
@@ -118,7 +106,7 @@ func (m *Godiatr) Send(request interface{}, params ...interface{}) (interface{},
 	}
 }
 
-func (m *Godiatr) Notify(request interface{}, params ...interface{}) {
+func (g *godiatr) Publish(request interface{}, params ...interface{}) {
 	// Check if request is nil or not
 	if request == nil {
 		panic(fmt.Sprintf("Godiatr request should not be null!"))
@@ -126,7 +114,7 @@ func (m *Godiatr) Notify(request interface{}, params ...interface{}) {
 
 	// Retrieve handler by Request
 	modelType := reflect.TypeOf(request)
-	notificationFunctions := m.notifications[modelType]
+	notificationFunctions := g.notifications[modelType]
 
 	if notificationFunctions == nil {
 		panic(fmt.Sprintf("Handler related to '%s' not found", modelType.Name()))

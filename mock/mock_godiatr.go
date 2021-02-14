@@ -3,11 +3,11 @@ package mock
 import "github.com/baranx/godiatr/godiatr"
 
 type OnSend func(request interface{}, params ...interface{}) (interface{}, error)
-type OnNotify func(request interface{}, params ...interface{})
+type OnPublish func(request interface{}, params ...interface{})
 
 type MockGodiatr struct {
-	OnSend OnSend
-	OnNotify OnNotify
+	OnSend   OnSend
+	OnPublish OnPublish
 }
 
 func (mock *MockGodiatr) GetHandler(request interface{}) interface{} {
@@ -34,6 +34,6 @@ func (mock *MockGodiatr) Send(request interface{}, params ...interface{}) (inter
 	return mock.OnSend(request, params...)
 }
 
-func (mock *MockGodiatr) Notify(request interface{}, params ...interface{}){
-	mock.OnNotify(request, params...)
+func (mock *MockGodiatr) Publish(request interface{}, params ...interface{}){
+	mock.OnPublish(request, params...)
 }

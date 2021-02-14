@@ -5,19 +5,19 @@ import (
 	"reflect"
 )
 
-type runnerPipeline struct {
+type executionPipeline struct {
 	Pipeline
-	mediator *Godiatr
+	gdtr *godiatr
 }
 
-func (ph *runnerPipeline) Handle(request interface{}, params ...interface{}) (interface{}, error) {
+func (p *executionPipeline) Handle(request interface{}, params ...interface{}) (interface{}, error) {
 	// Check if request is nil or not
 	if request == nil {
 		panic(fmt.Sprintf("Godiatr request should not be null!"))
 	}
 
 	// Retrieve handler by Request
-	handler := ph.mediator.GetHandler(request)
+	handler := p.gdtr.GetHandler(request)
 
 	// Initialize Handler
 	handlerValue := reflect.ValueOf(handler)

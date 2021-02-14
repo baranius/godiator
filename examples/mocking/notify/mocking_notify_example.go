@@ -31,7 +31,7 @@ type MockNotificationController struct {
 func (c *MockNotificationController) GetItem(id *int) (interface{}, error) {
 	request := &MockNotificationRequest{Id: id}
 
-	c.g.Notify(request)
+	c.g.Publish(request)
 
 	return nil, nil
 }

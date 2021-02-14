@@ -1,17 +1,10 @@
 package godiatr
 
-type (
-	IPipeline interface {
-		Next() IPipeline
-		SetNext(handler IPipeline)
-		Handle(request interface{}, params ...interface{}) (interface{}, error)
-	}
+import "errors"
 
-	Pipeline struct {
-		IPipeline
-		next IPipeline
-	}
-)
+type Pipeline struct {
+	next IPipeline
+}
 
 func (h *Pipeline) SetNext(handler IPipeline) {
 	h.next = handler
@@ -19,4 +12,8 @@ func (h *Pipeline) SetNext(handler IPipeline) {
 
 func (h *Pipeline) Next() IPipeline {
 	return h.next
+}
+
+func (h *Pipeline) Handle(request interface{}, params ...interface{}) (interface{}, error) {
+	return nil, errors.New("unhandled pipeline")
 }
