@@ -1,35 +1,45 @@
-package godiatr
+package godiator
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
 	"sync"
 )
 
 var (
-	gdtr *godiatr
+	g    *godiator
 	once sync.Once
 )
 
 // Define Struct
-type godiatr struct {
+type godiator struct {
 	handlers      map[reflect.Type]func() interface{}
 	notifications map[reflect.Type][]func() interface{}
 	pipelines     []IPipeline
 }
 
-// Define Initialization Method
-func GetInstance() IGodiatr {
+// Init Singleton
+func GetInstance() IGodiator {
 	once.Do(func() {
-		gdtr = &godiatr{
+		g = &godiator{
 			handlers:      make(map[reflect.Type]func() interface{}),
 			notifications: make(map[reflect.Type][]func() interface{}),
 		}
 	})
-	return gdtr
+	return g
 }
 
-func (g *godiatr) GetHandler(request interface{}) interface{} {
+func (g *godiator) getHandleMethod(handler interface{}) (reflect.Value, error) {
+	handlerValue := reflect.ValueOf(handler)
+	method := handlerValue.MethodByName("Handle")
+	if method.Kind() != reflect.Func {
+		return reflect.ValueOf(nil), errors.New(fmt.Sprintf("'Handle' function not found in %s", handlerValue.Type().Name()))
+	}
+	return method, nil
+}
+
+func (g *godiator) getHandler(request interface{}) interface{} {
 	modelType := reflect.TypeOf(request)
 	handlerFunc := g.handlers[modelType]
 	if handlerFunc == nil {
@@ -39,55 +49,55 @@ func (g *godiatr) GetHandler(request interface{}) interface{} {
 	return handlerFunc()
 }
 
-func (g *godiatr) GetHandlerResponse(request interface{}) interface{} {
-	handler := g.GetHandler(request)
-	handlerValue := reflect.ValueOf(handler)
-	method := handlerValue.MethodByName("Handle")
+// Apply Interface
+func (g *godiator) GetHandlerResponse(request interface{}) interface{} {
+	handler := g.getHandler(request)
+	method, err := g.getHandleMethod(handler)
+	if err != nil {
+		panic(err.Error())
+	}
 	responseType := method.Type().Out(0)
 	responseTypeKind := responseType.Kind()
-	var pv interface{}
+	var handlerResponse interface{}
 
 	if responseTypeKind == reflect.Slice {
-		pv = reflect.MakeSlice(responseType, 0, 0).Interface()
+		handlerResponse = reflect.MakeSlice(responseType, 0, 0).Interface()
 	} else if responseTypeKind == reflect.Struct {
-		pv = reflect.New(responseType).Interface()
+		handlerResponse = reflect.New(responseType).Interface()
 	} else if responseTypeKind == reflect.Ptr {
 		if responseType.Elem().Kind() == reflect.Struct {
-			pv = reflect.New(responseType.Elem()).Interface()
+			handlerResponse = reflect.New(responseType.Elem()).Interface()
 		} else if responseType.Elem().Kind() == reflect.Slice {
-			pv = reflect.MakeSlice(responseType.Elem(), 0, 0).Interface()
+			handlerResponse = reflect.MakeSlice(responseType.Elem(), 0, 0).Interface()
 		}
 	}
-	return pv
+	return handlerResponse
 }
 
-// Apply Interface
-func (g *godiatr) Register(request interface{}, handler func() interface{}) {
+func (g *godiator) Register(request interface{}, handler func() interface{}) {
 	g.handlers[reflect.TypeOf(request)] = handler
 }
 
-func (g *godiatr) RegisterPipeline(h IPipeline) {
+func (g *godiator) RegisterPipeline(h IPipeline) {
 	g.pipelines = append(g.pipelines, h)
 }
 
-func (g *godiatr) RegisterNotification(request interface{}, handler func() interface{}) {
-	handlers := g.notifications[reflect.TypeOf(request)]
-	handlers = append(handlers, handler)
+func (g *godiator) RegisterSubscription(request interface{}, handlers ...func() interface{}) {
 	g.notifications[reflect.TypeOf(request)] = handlers
 }
 
-func (g *godiatr) Send(request interface{}, params ...interface{}) (interface{}, error) {
-	// Initialize an anonymous handler
-	runnerPipeline := new(executionPipeline)
-	runnerPipeline.gdtr = g
+func (g *godiator) Send(request interface{}, params ...interface{}) (interface{}, error) {
+	// Initialize an anonymous pipeline
+	executionPipeline := new(executionPipeline)
+	executionPipeline.g = g
 
 	if len(g.pipelines) > 0 {
-		// Loop through pipelines by reverse if exists and bind them to each other
+		// Reverse loop through pipelines if any. Bind them to each other
 		var mainPipeline IPipeline
 		for i := len(g.pipelines) - 1; i >= 0; i-- {
 			if i == len(g.pipelines)-1 {
 				pipeline := g.pipelines[i]
-				pipeline.SetNext(runnerPipeline)
+				pipeline.SetNext(executionPipeline)
 				mainPipeline = g.pipelines[i]
 			} else {
 				g.pipelines[i].SetNext(mainPipeline)
@@ -102,14 +112,25 @@ func (g *godiatr) Send(request interface{}, params ...interface{}) (interface{},
 		}
 	} else {
 		// Call handler w/- pipeline if there is no pipeline
-		return runnerPipeline.Handle(request, params...)
+		return executionPipeline.Handle(request, params...)
 	}
 }
 
-func (g *godiatr) Publish(request interface{}, params ...interface{}) {
+func (g *godiator) publishWithRecover(handlerName string, method reflect.Value, inputs []reflect.Value) {
+	defer func() {
+		if r := recover(); r != nil {
+			message := fmt.Sprintf("Notification Failed (%v) -> ", handlerName)
+			fmt.Println(message, r)
+		}
+	}()
+
+	method.Call(inputs)
+}
+
+func (g *godiator) Publish(request interface{}, params ...interface{}) {
 	// Check if request is nil or not
 	if request == nil {
-		panic(fmt.Sprintf("Godiatr request should not be null!"))
+		panic(fmt.Sprintf("Godiator request should not be null!"))
 	}
 
 	// Retrieve handler by Request
@@ -138,7 +159,7 @@ func (g *godiatr) Publish(request interface{}, params ...interface{}) {
 			inputs = append(inputs, reflect.ValueOf(v))
 		}
 
-		// Call required method with given parameters
-		method.Call(inputs)
+		// Call with given params
+		g.publishWithRecover(reflect.TypeOf(handler).Elem().String(), method, inputs)
 	}
 }

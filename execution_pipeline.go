@@ -1,4 +1,4 @@
-package godiatr
+package godiator
 
 import (
 	"fmt"
@@ -7,23 +7,22 @@ import (
 
 type executionPipeline struct {
 	Pipeline
-	gdtr *godiatr
+	g *godiator
 }
 
 func (p *executionPipeline) Handle(request interface{}, params ...interface{}) (interface{}, error) {
 	// Check if request is nil or not
 	if request == nil {
-		panic(fmt.Sprintf("Godiatr request should not be null!"))
+		panic(fmt.Sprintf("Godiator request should not be nil!"))
 	}
 
-	// Retrieve handler by Request
-	handler := p.gdtr.GetHandler(request)
+	// Get handler by request
+	handler := p.g.getHandler(request)
 
-	// Initialize Handler
-	handlerValue := reflect.ValueOf(handler)
-	method := handlerValue.MethodByName("Handle")
-	if method.Kind() != reflect.Func {
-		panic(fmt.Sprintf("'Handle' function not found in %s", handlerValue.Type().Name()))
+	// Get handle method
+	method, err := g.getHandleMethod(handler)
+	if err != nil {
+		panic(err.Error())
 	}
 
 	// Iterate parameters
@@ -34,7 +33,7 @@ func (p *executionPipeline) Handle(request interface{}, params ...interface{}) (
 		inputs = append(inputs, reflect.ValueOf(v))
 	}
 
-	// Call required method with given parameters
+	// Call handle method with given parameters
 	result := method.Call(inputs)
 
 	// Return result

@@ -1,12 +1,11 @@
-package godiatr
+package godiator
 
 type (
-	IGodiatr interface {
-		GetHandler(request interface{}) interface{}
+	IGodiator interface {
 		GetHandlerResponse(request interface{}) interface{}
 		RegisterPipeline(h IPipeline)
 		Register(request interface{}, handler func() interface{})
-		RegisterNotification(request interface{}, handler func() interface{})
+		RegisterSubscription(request interface{}, handler ...func() interface{})
 		Send(request interface{}, params ...interface{}) (interface{}, error)
 		Publish(request interface{}, params ...interface{})
 	}

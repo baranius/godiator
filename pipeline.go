@@ -1,4 +1,4 @@
-package godiatr
+package godiator
 
 import "errors"
 

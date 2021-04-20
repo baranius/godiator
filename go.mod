@@ -1,4 +1,4 @@
-module github.com/baranx/godiatr
+module github.com/baranius/godiator
 
 go 1.13
 
