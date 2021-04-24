@@ -4,6 +4,7 @@ Easy to use mediator implementation in Golang. Provides in-process messaging abi
 
 Usage examples:
 - [Echo](https://github.com/baranius/godiator-echo)
+- [gin](https://github.com/baranius/godiator-gin)
 
 ## Installation
 
