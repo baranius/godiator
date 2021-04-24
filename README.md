@@ -216,7 +216,7 @@ Call **RegisterPipeline** method to register pipelines.
 func RegisterPipelines() {
     g := godiator.GetInstance()
     
-    g.RegisterPipeline(&ValidationPipeline{}) // Will run first
+    g.RegisterPipeline(&ValidationPipeline{}) // Runs first
     g.RegisterPipeline(&SomeOtherPipeline{})
 }
 ```
