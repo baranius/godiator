@@ -2,7 +2,7 @@
 
 Easy to use mediator implementation in Golang. Provides in-process messaging ability to your apps.
 
-Implementation examples:
+Usage examples:
 - [Echo](https://github.com/baranius/godiator-echo)
 
 ## Installation
