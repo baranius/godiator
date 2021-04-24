@@ -38,6 +38,34 @@ func (s *GodiatorTestSuite) Test_GetHandlerResponse() {
 	assert.NotNil(s.T(), responseObject)
 }
 
+func (s *GodiatorTestSuite) Test_Send_Should_Panic_When_Handler_Not_Found() {
+	// Given
+	g := GetInstance()
+
+	g.Register(&sampleRequest{}, newSampleHandler)
+
+	request := &failingRequest{}
+
+	// When
+	assert.Panics(s.T(), func() {
+		g.Send(request)
+	})
+}
+
+func (s *GodiatorTestSuite) Test_Send_Should_Panic_When_Handler_Not_Have_Handle_Func() {
+	// Given
+	g := GetInstance()
+
+	g.Register(&failingRequest{}, newFailingHandler)
+
+	request := &failingRequest{}
+
+	// When
+	assert.Panics(s.T(), func() {
+		g.Send(request)
+	})
+}
+
 func (s *GodiatorTestSuite) Test_Send_Should_Be_Executed() {
 	// Given
 	g := GetInstance()

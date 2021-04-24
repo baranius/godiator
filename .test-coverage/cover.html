@@ -1,0 +1,454 @@
+
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<title>godiator: Go Coverage Report</title>
+		<style>
+			body {
+				background: black;
+				color: rgb(80, 80, 80);
+			}
+			body, pre, #legend span {
+				font-family: Menlo, monospace;
+				font-weight: bold;
+			}
+			#topbar {
+				background: black;
+				position: fixed;
+				top: 0; left: 0; right: 0;
+				height: 42px;
+				border-bottom: 1px solid rgb(80, 80, 80);
+			}
+			#content {
+				margin-top: 50px;
+			}
+			#nav, #legend {
+				float: left;
+				margin-left: 10px;
+			}
+			#legend {
+				margin-top: 12px;
+			}
+			#nav {
+				margin-top: 10px;
+			}
+			#legend span {
+				margin: 0 5px;
+			}
+			.cov0 { color: rgb(192, 0, 0) }
+.cov1 { color: rgb(128, 128, 128) }
+.cov2 { color: rgb(116, 140, 131) }
+.cov3 { color: rgb(104, 152, 134) }
+.cov4 { color: rgb(92, 164, 137) }
+.cov5 { color: rgb(80, 176, 140) }
+.cov6 { color: rgb(68, 188, 143) }
+.cov7 { color: rgb(56, 200, 146) }
+.cov8 { color: rgb(44, 212, 149) }
+.cov9 { color: rgb(32, 224, 152) }
+.cov10 { color: rgb(20, 236, 155) }
+
+		</style>
+	</head>
+	<body>
+		<div id="topbar">
+			<div id="nav">
+				<select id="files">
+				
+				<option value="file0">github.com/baranius/godiator/execution_pipeline.go (71.4%)</option>
+				
+				<option value="file1">github.com/baranius/godiator/godiator.go (80.0%)</option>
+				
+				<option value="file2">github.com/baranius/godiator/mock_godiator.go (0.0%)</option>
+				
+				<option value="file3">github.com/baranius/godiator/pipeline.go (33.3%)</option>
+				
+				<option value="file4">github.com/baranius/godiator/test_definitions.go (77.8%)</option>
+				
+				</select>
+			</div>
+			<div id="legend">
+				<span>not tracked</span>
+			
+				<span class="cov0">not covered</span>
+				<span class="cov8">covered</span>
+			
+			</div>
+		</div>
+		<div id="content">
+		
+		<pre class="file" id="file0" style="display: none">package godiator
+
+import (
+        "fmt"
+        "reflect"
+)
+
+type executionPipeline struct {
+        Pipeline
+        g *godiator
+}
+
+func (p *executionPipeline) Handle(request interface{}, params ...interface{}) (interface{}, error) <span class="cov8" title="1">{
+        // Check if request is nil or not
+        if request == nil </span><span class="cov0" title="0">{
+                panic(fmt.Sprintf("Godiator request should not be nil!"))</span>
+        }
+
+        // Get handler by request
+        <span class="cov8" title="1">handler := p.g.getHandler(request)
+
+        // Get handle method
+        method, err := g.getHandleMethod(handler)
+        if err != nil </span><span class="cov0" title="0">{
+                panic(err.Error())</span>
+        }
+
+        // Iterate parameters
+        <span class="cov8" title="1">var inputs []reflect.Value
+        inputs = append(inputs, reflect.ValueOf(request))
+
+        for _, v := range params </span><span class="cov0" title="0">{
+                inputs = append(inputs, reflect.ValueOf(v))
+        }</span>
+
+        // Call handle method with given parameters
+        <span class="cov8" title="1">result := method.Call(inputs)
+
+        // Return result
+        if result[1].Interface() != nil </span><span class="cov0" title="0">{
+                return nil, result[1].Interface().(error)
+        }</span>
+
+        <span class="cov8" title="1">return result[0].Interface(), nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file1" style="display: none">package godiator
+
+import (
+        "errors"
+        "fmt"
+        "reflect"
+        "sync"
+)
+
+var (
+        g    *godiator
+        once sync.Once
+)
+
+// Define Struct
+type godiator struct {
+        handlers      map[reflect.Type]func() interface{}
+        notifications map[reflect.Type][]func() interface{}
+        pipelines     []IPipeline
+}
+
+// Init Singleton
+func GetInstance() IGodiator <span class="cov8" title="1">{
+        once.Do(func() </span><span class="cov8" title="1">{
+                g = &amp;godiator{
+                        handlers:      make(map[reflect.Type]func() interface{}),
+                        notifications: make(map[reflect.Type][]func() interface{}),
+                }
+        }</span>)
+        <span class="cov8" title="1">return g</span>
+}
+
+func (g *godiator) getHandleMethod(handler interface{}) (reflect.Value, error) <span class="cov8" title="1">{
+        handlerValue := reflect.ValueOf(handler)
+        method := handlerValue.MethodByName("Handle")
+        if method.Kind() != reflect.Func </span><span class="cov0" title="0">{
+                return reflect.ValueOf(nil), errors.New(fmt.Sprintf("'Handle' function not found in %s", handlerValue.Type().Name()))
+        }</span>
+        <span class="cov8" title="1">return method, nil</span>
+}
+
+func (g *godiator) getHandler(request interface{}) interface{} <span class="cov8" title="1">{
+        modelType := reflect.TypeOf(request)
+        handlerFunc := g.handlers[modelType]
+        if handlerFunc == nil </span><span class="cov0" title="0">{
+                panic(fmt.Sprintf("Handler related to '%s' not found", modelType.Name()))</span>
+        }
+
+        <span class="cov8" title="1">return handlerFunc()</span>
+}
+
+// Apply Interface
+func (g *godiator) GetHandlerResponse(request interface{}) interface{} <span class="cov8" title="1">{
+        handler := g.getHandler(request)
+        method, err := g.getHandleMethod(handler)
+        if err != nil </span><span class="cov0" title="0">{
+                panic(err.Error())</span>
+        }
+        <span class="cov8" title="1">responseType := method.Type().Out(0)
+        responseTypeKind := responseType.Kind()
+        var handlerResponse interface{}
+
+        if responseTypeKind == reflect.Slice </span><span class="cov0" title="0">{
+                handlerResponse = reflect.MakeSlice(responseType, 0, 0).Interface()
+        }</span> else<span class="cov8" title="1"> if responseTypeKind == reflect.Struct </span><span class="cov0" title="0">{
+                handlerResponse = reflect.New(responseType).Interface()
+        }</span> else<span class="cov8" title="1"> if responseTypeKind == reflect.Ptr </span><span class="cov8" title="1">{
+                if responseType.Elem().Kind() == reflect.Struct </span><span class="cov8" title="1">{
+                        handlerResponse = reflect.New(responseType.Elem()).Interface()
+                }</span> else<span class="cov0" title="0"> if responseType.Elem().Kind() == reflect.Slice </span><span class="cov0" title="0">{
+                        handlerResponse = reflect.MakeSlice(responseType.Elem(), 0, 0).Interface()
+                }</span>
+        }
+        <span class="cov8" title="1">return handlerResponse</span>
+}
+
+func (g *godiator) Register(request interface{}, handler func() interface{}) <span class="cov8" title="1">{
+        g.handlers[reflect.TypeOf(request)] = handler
+}</span>
+
+func (g *godiator) RegisterPipeline(h IPipeline) <span class="cov8" title="1">{
+        g.pipelines = append(g.pipelines, h)
+}</span>
+
+func (g *godiator) RegisterSubscription(request interface{}, handlers ...func() interface{}) <span class="cov8" title="1">{
+        g.notifications[reflect.TypeOf(request)] = handlers
+}</span>
+
+func (g *godiator) Send(request interface{}, params ...interface{}) (interface{}, error) <span class="cov8" title="1">{
+        // Initialize an anonymous pipeline
+        executionPipeline := new(executionPipeline)
+        executionPipeline.g = g
+
+        if len(g.pipelines) &gt; 0 </span><span class="cov8" title="1">{
+                // Reverse loop through pipelines if any. Bind them to each other
+                var mainPipeline IPipeline
+                for i := len(g.pipelines) - 1; i &gt;= 0; i-- </span><span class="cov8" title="1">{
+                        if i == len(g.pipelines)-1 </span><span class="cov8" title="1">{
+                                pipeline := g.pipelines[i]
+                                pipeline.SetNext(executionPipeline)
+                                mainPipeline = g.pipelines[i]
+                        }</span> else<span class="cov0" title="0"> {
+                                g.pipelines[i].SetNext(mainPipeline)
+                                mainPipeline = g.pipelines[i]
+                        }</span>
+                }
+                <span class="cov8" title="1">if mainPipeline != nil </span><span class="cov8" title="1">{
+                        // Call nested handlers w/+ given parameters
+                        return mainPipeline.Handle(request, params...)
+                }</span> else<span class="cov0" title="0"> {
+                        panic("Pipeline error")</span>
+                }
+        } else<span class="cov8" title="1"> {
+                // Call handler w/- pipeline if there is no pipeline
+                return executionPipeline.Handle(request, params...)
+        }</span>
+}
+
+func (g *godiator) publishWithRecover(handlerName string, method reflect.Value, inputs []reflect.Value) <span class="cov8" title="1">{
+        defer func() </span><span class="cov8" title="1">{
+                if r := recover(); r != nil </span><span class="cov8" title="1">{
+                        message := fmt.Sprintf("Notification Failed (%v) -&gt; ", handlerName)
+                        fmt.Println(message, r)
+                }</span>
+        }()
+
+        <span class="cov8" title="1">method.Call(inputs)</span>
+}
+
+func (g *godiator) Publish(request interface{}, params ...interface{}) <span class="cov8" title="1">{
+        // Check if request is nil or not
+        if request == nil </span><span class="cov0" title="0">{
+                panic(fmt.Sprintf("Godiator request should not be null!"))</span>
+        }
+
+        // Retrieve handler by Request
+        <span class="cov8" title="1">modelType := reflect.TypeOf(request)
+        notificationFunctions := g.notifications[modelType]
+
+        if notificationFunctions == nil </span><span class="cov0" title="0">{
+                panic(fmt.Sprintf("Handler related to '%s' not found", modelType.Name()))</span>
+        }
+
+        <span class="cov8" title="1">for _, notificationFunc := range notificationFunctions </span><span class="cov8" title="1">{
+                handler := notificationFunc()
+
+                // Initialize Handler
+                handlerValue := reflect.ValueOf(handler)
+                method := handlerValue.MethodByName("Handle")
+                if method.Kind() != reflect.Func </span><span class="cov0" title="0">{
+                        panic(fmt.Sprintf("Handle function not found in %s", handlerValue.Type().Name()))</span>
+                }
+
+                // Iterate parameters
+                <span class="cov8" title="1">var inputs []reflect.Value
+                inputs = append(inputs, reflect.ValueOf(request))
+
+                for _, v := range params </span><span class="cov0" title="0">{
+                        inputs = append(inputs, reflect.ValueOf(v))
+                }</span>
+
+                // Call with given params
+                <span class="cov8" title="1">g.publishWithRecover(reflect.TypeOf(handler).Elem().String(), method, inputs)</span>
+        }
+}
+</pre>
+		
+		<pre class="file" id="file2" style="display: none">package godiator
+
+type OnSend func(request interface{}, params ...interface{}) (interface{}, error)
+type OnPublish func(request interface{}, params ...interface{})
+
+type MockGodiator struct {
+        OnSend    OnSend
+        OnPublish OnPublish
+}
+
+func (mock *MockGodiator) GetHandlerResponse(request interface{}) interface{} <span class="cov0" title="0">{
+        return nil
+}</span>
+
+func (mock *MockGodiator) RegisterPipeline(h IPipeline) {<span class="cov0" title="0">
+
+}</span>
+
+func (mock *MockGodiator) Register(request interface{}, handler func() interface{}) {<span class="cov0" title="0">
+
+}</span>
+
+func (mock *MockGodiator) RegisterSubscription(request interface{}, handler ...func() interface{}) {<span class="cov0" title="0">
+
+}</span>
+
+func (mock *MockGodiator) Send(request interface{}, params ...interface{}) (interface{}, error) <span class="cov0" title="0">{
+        return mock.OnSend(request, params...)
+}</span>
+
+func (mock *MockGodiator) Publish(request interface{}, params ...interface{}) <span class="cov0" title="0">{
+        mock.OnPublish(request, params...)
+}</span>
+</pre>
+		
+		<pre class="file" id="file3" style="display: none">package godiator
+
+import "errors"
+
+type Pipeline struct {
+        next IPipeline
+}
+
+func (h *Pipeline) SetNext(handler IPipeline) <span class="cov8" title="1">{
+        h.next = handler
+}</span>
+
+func (h *Pipeline) Next() IPipeline <span class="cov0" title="0">{
+        return h.next
+}</span>
+
+func (h *Pipeline) Handle(request interface{}, params ...interface{}) (interface{}, error) <span class="cov0" title="0">{
+        return nil, errors.New("unhandled pipeline")
+}</span>
+</pre>
+		
+		<pre class="file" id="file4" style="display: none">package godiator
+
+import (
+        "errors"
+)
+
+// Failing Handler
+type (
+        failingRequest struct {
+        }
+
+        failingHandler struct {
+        }
+)
+
+func newFailingHandler() interface{} <span class="cov0" title="0">{
+        return &amp;failingHandler{}
+}</span>
+
+// Sample Handler
+type (
+        sampleRequest struct {
+                PayloadString *string
+        }
+
+        sampleResponse struct {
+                ResultString *string
+        }
+
+        sampleHandler struct {
+        }
+)
+
+func newSampleHandler() interface{} <span class="cov8" title="1">{
+        return &amp;sampleHandler{}
+}</span>
+
+func (h *sampleHandler) Handle(request *sampleRequest) (*sampleResponse, error) <span class="cov8" title="1">{
+        return &amp;sampleResponse{ResultString: request.PayloadString}, nil
+}</span>
+
+// Sample Subscriber
+type (
+        subscriberRequest struct {
+                PayloadString *string
+        }
+
+        subscriberHandler struct {
+        }
+)
+
+func newSubscriberHandler() interface{} <span class="cov8" title="1">{
+        return &amp;subscriberHandler{}
+}</span>
+
+func (h *subscriberHandler) Handle(request *subscriberRequest) <span class="cov8" title="1">{
+        panic("dunno what to do")</span>
+}
+
+// Sample Pipeline
+type validationPipeline struct {
+        Pipeline
+}
+
+func (p *validationPipeline) Handle(request interface{}, params ...interface{}) (interface{}, error) <span class="cov8" title="1">{
+        r := request.(*sampleRequest)
+
+        if r.PayloadString == nil </span><span class="cov8" title="1">{
+                return nil, errors.New("PayloadString_should_not_be_null")
+        }</span>
+
+        <span class="cov0" title="0">return p.Next().Handle(request, params...)</span>
+}
+</pre>
+		
+		</div>
+	</body>
+	<script>
+	(function() {
+		var files = document.getElementById('files');
+		var visible;
+		files.addEventListener('change', onChange, false);
+		function select(part) {
+			if (visible)
+				visible.style.display = 'none';
+			visible = document.getElementById(part);
+			if (!visible)
+				return;
+			files.value = part;
+			visible.style.display = 'block';
+			location.hash = part;
+		}
+		function onChange() {
+			select(files.value);
+			window.scrollTo(0, 0);
+		}
+		if (location.hash != "") {
+			select(location.hash.substr(1));
+		}
+		if (!visible) {
+			select("file0");
+		}
+	})();
+	</script>
+</html>

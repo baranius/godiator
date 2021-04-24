@@ -4,18 +4,30 @@ import (
 	"errors"
 )
 
+// Failing Handler
+type (
+	failingRequest struct {
+	}
+
+	failingHandler struct {
+	}
+)
+
+func newFailingHandler() interface{} {
+	return &failingHandler{}
+}
+
 // Sample Handler
 type (
-	sampleRequest struct{
+	sampleRequest struct {
 		PayloadString *string
 	}
 
-	sampleResponse struct{
+	sampleResponse struct {
 		ResultString *string
 	}
 
-	sampleHandler struct{
-
+	sampleHandler struct {
 	}
 )
 
@@ -23,7 +35,7 @@ func newSampleHandler() interface{} {
 	return &sampleHandler{}
 }
 
-func (h *sampleHandler) Handle(request *sampleRequest) (*sampleResponse, error){
+func (h *sampleHandler) Handle(request *sampleRequest) (*sampleResponse, error) {
 	return &sampleResponse{ResultString: request.PayloadString}, nil
 }
 
@@ -44,7 +56,6 @@ func newSubscriberHandler() interface{} {
 func (h *subscriberHandler) Handle(request *subscriberRequest) {
 	panic("dunno what to do")
 }
-
 
 // Sample Pipeline
 type validationPipeline struct {

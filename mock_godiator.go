@@ -16,11 +16,11 @@ func (mock *MockGodiator) RegisterPipeline(h IPipeline) {
 
 }
 
-func (mock *MockGodiator) Register(request interface{}, handler func()interface{}) {
+func (mock *MockGodiator) Register(request interface{}, handler func() interface{}) {
 
 }
 
-func (mock *MockGodiator) RegisterSubscription(request interface{}, handler ...func()interface{}) {
+func (mock *MockGodiator) RegisterSubscription(request interface{}, handler ...func() interface{}) {
 
 }
 
@@ -28,6 +28,6 @@ func (mock *MockGodiator) Send(request interface{}, params ...interface{}) (inte
 	return mock.OnSend(request, params...)
 }
 
-func (mock *MockGodiator) Publish(request interface{}, params ...interface{}){
+func (mock *MockGodiator) Publish(request interface{}, params ...interface{}) {
 	mock.OnPublish(request, params...)
 }

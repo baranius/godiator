@@ -34,7 +34,7 @@ func (g *godiator) getHandleMethod(handler interface{}) (reflect.Value, error) {
 	handlerValue := reflect.ValueOf(handler)
 	method := handlerValue.MethodByName("Handle")
 	if method.Kind() != reflect.Func {
-		return reflect.ValueOf(nil), errors.New(fmt.Sprintf("'Handle' function not found in %s", handlerValue.Type().Name()))
+		return reflect.ValueOf(nil), errors.New(fmt.Sprintf("'Handle' function not found in %s", handlerValue.Type().String()))
 	}
 	return method, nil
 }
@@ -43,7 +43,7 @@ func (g *godiator) getHandler(request interface{}) interface{} {
 	modelType := reflect.TypeOf(request)
 	handlerFunc := g.handlers[modelType]
 	if handlerFunc == nil {
-		panic(fmt.Sprintf("Handler related to '%s' not found", modelType.Name()))
+		panic(fmt.Sprintf("Handler related to '%s' not found", modelType.String()))
 	}
 
 	return handlerFunc()
@@ -130,7 +130,7 @@ func (g *godiator) publishWithRecover(handlerName string, method reflect.Value, 
 func (g *godiator) Publish(request interface{}, params ...interface{}) {
 	// Check if request is nil or not
 	if request == nil {
-		panic(fmt.Sprintf("Godiator request should not be null!"))
+		panic(fmt.Sprintf("Godiator request should not be nil!"))
 	}
 
 	// Retrieve handler by Request
@@ -138,7 +138,7 @@ func (g *godiator) Publish(request interface{}, params ...interface{}) {
 	notificationFunctions := g.notifications[modelType]
 
 	if notificationFunctions == nil {
-		panic(fmt.Sprintf("Handler related to '%s' not found", modelType.Name()))
+		panic(fmt.Sprintf("Handler related to '%s' not found", modelType.String()))
 	}
 
 	for _, notificationFunc := range notificationFunctions {
@@ -148,7 +148,7 @@ func (g *godiator) Publish(request interface{}, params ...interface{}) {
 		handlerValue := reflect.ValueOf(handler)
 		method := handlerValue.MethodByName("Handle")
 		if method.Kind() != reflect.Func {
-			panic(fmt.Sprintf("Handle function not found in %s", handlerValue.Type().Name()))
+			panic(fmt.Sprintf("Handle function not found in %s", handlerValue.Type().String()))
 		}
 
 		// Iterate parameters
