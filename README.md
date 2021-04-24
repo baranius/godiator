@@ -10,7 +10,7 @@ Usage examples:
 You should install godiator via Go package manager:
 
 ```
-$ go get -v https://github.com/baranius/godiator
+$ go get -v github.com/baranius/godiator
 ```
 
 ## Usage
