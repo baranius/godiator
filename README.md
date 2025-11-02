@@ -1,3 +1,6 @@
+> [!IMPORTANT] 
+> This version is not being maintained or supported anymore. This branch is just exists for sentimental reasons :)
+
 # godiator
 
 Easy to use mediator implementation in Golang. Provides in-process messaging ability to your apps.
