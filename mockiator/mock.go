@@ -1,8 +1,6 @@
 package mockiator
 
-import (
-	"github.com/baranius/godiator/register"
-)
+import "github.com/baranius/godiator"
 
 type mockHandler[TRequest any, TResponse any] struct {
 	handlerFunc func(request TRequest, params ...any) (TResponse, error)
@@ -18,7 +16,7 @@ func (m *mockHandler[TRequest, TResponse]) Handle(request TRequest, params ...an
 
 func OnSend[TRequest any, TResponse any](handler func(request TRequest, params ...any) (TResponse, error)) *mockHandler[TRequest, TResponse] {
 	h := mockHandler[TRequest, TResponse]{handlerFunc: handler}
-	register.Handler[TRequest, TResponse](&h)
+	godiator.RegisterHandler[TRequest, TResponse](&h)
 	return &h
 }
 
@@ -36,6 +34,6 @@ func (s *mockSubscriber[TRequest]) Handle(request TRequest, params ...any) {
 
 func OnPublish[TRequest any](handler func(request TRequest, params ...any)) *mockSubscriber[TRequest] {
 	subs := mockSubscriber[TRequest]{handlerFunc: handler}
-	register.Subscriber[TRequest](&subs)
+	godiator.RegisterSubscriber(&subs)
 	return &subs
 }

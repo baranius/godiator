@@ -38,7 +38,8 @@ func AddHandler[TRequest any, TResponse any](handler interfaces.Handler[TRequest
 }
 
 // Returns the handler for given request model
-func GetHandler[TRequest any, TResponse any](request any) (*handlerWrapper[TRequest, TResponse], bool) {
+func GetHandler[TRequest any, TResponse any]() (*handlerWrapper[TRequest, TResponse], bool) {
+	var request TRequest
 	requestType := reflect.TypeOf(request)
 	handler := messageHandlers[requestType]
 	if handler == nil {
@@ -69,7 +70,8 @@ func AddSubscriber[TRequest any](subscribers ...interfaces.Subscriber[TRequest])
 }
 
 // Returns the subscriber(s) for given request model
-func GetSubscribers[TRequest any](request TRequest) []subscriberWrapper[TRequest] {
+func GetSubscribers[TRequest any]() []subscriberWrapper[TRequest] {
+	var request TRequest
 	subscribers := messageSubscribers[reflect.TypeOf(request)]
 	result := make([]subscriberWrapper[TRequest], 0)
 	for _, sub := range subscribers {
@@ -84,7 +86,8 @@ func GetSubscribers[TRequest any](request TRequest) []subscriberWrapper[TRequest
 }
 
 // Removes the handler(s) for given request interfaces
-func RemoveSubscriber[TRequest any](request TRequest) {
+func RemoveSubscriber[TRequest any]() {
+	var request TRequest
 	delete(messageSubscribers, reflect.TypeOf(request))
 }
 

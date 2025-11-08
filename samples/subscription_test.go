@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/baranius/godiator"
-	"github.com/baranius/godiator/register"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -25,7 +24,7 @@ func (s *SubscriberIntegrationTestSuite) TestSubscriberExecution() {
 	}
 
 	mySubscriber := &MySubscriptionHandler[MySubscriptionRequest]{IsHandlerExecuted: false}
-	register.Subscriber(mySubscriber)
+	godiator.RegisterSubscriber(mySubscriber)
 
 	// When
 	godiator.Publish(req, nil)
@@ -45,8 +44,8 @@ func (s *SubscriberIntegrationTestSuite) TestMultipleSubscriberExecution() {
 	mySubscription := &MySubscriptionHandler[MySubscriptionRequest]{IsHandlerExecuted: false}
 	myOtherSubscription := &MyOtherSubscriptionHandler[MySubscriptionRequest]{IsHandlerExecuted: false}
 
-	register.Subscriber(mySubscription)
-	register.Subscriber(myOtherSubscription)
+	godiator.RegisterSubscriber(mySubscription)
+	godiator.RegisterSubscriber(myOtherSubscription)
 
 	// When
 	godiator.Publish(req, nil)

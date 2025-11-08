@@ -1,12 +1,10 @@
 package godiator
 
-import (
-	"github.com/baranius/godiator/core"
-)
+import "github.com/baranius/godiator/pipeline"
 
 // Execution Pipeline is the last ring of the pipeline chain
 type executionPipeline struct {
-	core.Pipeline
+	pipeline.BasePipeline
 	wrapperFunc func(request any, params ...any) (any, error)
 }
 

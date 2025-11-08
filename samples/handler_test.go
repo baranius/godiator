@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/baranius/godiator"
-	"github.com/baranius/godiator/register"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -18,7 +17,7 @@ func TestHandlerIntegrationTestSuite(t *testing.T) {
 
 func (s *HandlerIntegrationTestSuite) TestHandlerExecutedSuccesfully() {
 	// Given
-	register.Handler(&MyHandler[MyRequest, MyResponse]{})
+	godiator.RegisterHandler(&MyHandler[MyRequest, MyResponse]{})
 
 	request := MyRequest{
 		Id: 1,
@@ -35,7 +34,7 @@ func (s *HandlerIntegrationTestSuite) TestHandlerExecutedSuccesfully() {
 
 func (s *HandlerIntegrationTestSuite) TestHandlerFailedExecution() {
 	// Given
-	register.Handler(&MyFailedHandler[MyRequest, MyResponse]{})
+	godiator.RegisterHandler(&MyFailedHandler[MyRequest, MyResponse]{})
 
 	request := MyRequest{
 		Id: 1,

@@ -1,4 +1,4 @@
-package core
+package pipeline
 
 import (
 	"testing"
@@ -15,10 +15,10 @@ func TestRunPipelineTestSuite(t *testing.T) {
 }
 
 func (s *PipelineTestSuite) TestPipelineActions() {
-	pipeline := &Pipeline{}
+	pipeline := &BasePipeline{}
 	s.Suite.NotNil(pipeline)
 
-	nextPipeline := &Pipeline{}
+	nextPipeline := &BasePipeline{}
 	pipeline.SetNext(nextPipeline)
 
 	s.Suite.Equal(nextPipeline, pipeline.Next())

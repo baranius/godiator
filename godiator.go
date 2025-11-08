@@ -9,9 +9,29 @@ import (
 	"github.com/baranius/godiator/core/interfaces"
 )
 
+func RegisterHandler[TRequest any, TResponse any](handler interfaces.Handler[TRequest, TResponse]) {
+	core.AddHandler[TRequest, TResponse](handler)
+}
+
+func RegisterSubscriber[TRequest any](subscriber interfaces.Subscriber[TRequest]) {
+	core.AddSubscriber[TRequest](subscriber)
+}
+
+func RegisterPipeline(pipeline interfaces.Pipeline) {
+	core.AddPipeline(pipeline)
+}
+
+func UnregisterHandler[TRequest any]() {
+	core.RemoveHandler[TRequest]()
+}
+
+func UnregisterSubscriber[TRequest any](subscriber interfaces.Subscriber[TRequest]) {
+	core.RemoveSubscriber[TRequest]()
+}
+
 // Executes the related handler for given request type
 func Send[TRequest any, TResponse any](request TRequest, params ...any) (TResponse, error) {
-	handler, ok := core.GetHandler[TRequest, TResponse](request)
+	handler, ok := core.GetHandler[TRequest, TResponse]()
 	if !ok {
 		var emptyResponse TResponse
 		return emptyResponse, fmt.Errorf(`handler not found for "%s"`, reflect.TypeOf(request).String())
@@ -46,7 +66,7 @@ func Send[TRequest any, TResponse any](request TRequest, params ...any) (TRespon
 
 // Executes the related subscriber(s) for given request type
 func Publish[TRequest any](request TRequest, params ...any) {
-	subscribers := core.GetSubscribers(request)
+	subscribers := core.GetSubscribers[TRequest]()
 	if len(subscribers) > 0 {
 		for _, subscriber := range subscribers {
 			go subscriber.Handle(request, params...)

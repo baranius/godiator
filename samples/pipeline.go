@@ -4,12 +4,12 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/baranius/godiator/core"
+	"github.com/baranius/godiator/pipeline"
 )
 
 type (
 	LoggingPipeline struct {
-		core.Pipeline
+		pipeline.BasePipeline
 		ErrorMessage string
 		LogMessage   string
 	}

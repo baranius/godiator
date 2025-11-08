@@ -4,7 +4,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/baranius/godiator/register"
 	"github.com/baranius/godiator/samples"
 	"github.com/stretchr/testify/suite"
 )
@@ -20,7 +19,7 @@ func TestGodiatorTestSuite(t *testing.T) {
 func (s *GodiatorTestSuite) TestGodiatorSend() {
 	// Given
 	request := samples.MyRequest{Id: 1}
-	register.Handler(&samples.MyHandler[samples.MyRequest, samples.MyResponse]{})
+	RegisterHandler(&samples.MyHandler[samples.MyRequest, samples.MyResponse]{})
 
 	// When
 	response, err := Send[samples.MyRequest, samples.MyResponse](request, nil)
@@ -34,8 +33,8 @@ func (s *GodiatorTestSuite) TestGodiatorSend_WithPipeline() {
 	// Given
 	request := samples.MyRequest{Id: 2}
 	pipeline := &samples.LoggingPipeline{}
-	register.Pipeline(pipeline)
-	register.Handler(&samples.MyHandler[samples.MyRequest, samples.MyResponse]{})
+	RegisterPipeline(pipeline)
+	RegisterHandler(&samples.MyHandler[samples.MyRequest, samples.MyResponse]{})
 
 	// When
 	response, err := Send[samples.MyRequest, samples.MyResponse](request, nil)
@@ -52,9 +51,9 @@ func (s *GodiatorTestSuite) TestGodiatorSend_WithMultiplePipeline() {
 	request := samples.MyRequest{Id: 3}
 	firstPipeline := &samples.LoggingPipeline{}
 	secondPipeline := &samples.LoggingPipeline{}
-	register.Pipeline(firstPipeline)
-	register.Pipeline(secondPipeline)
-	register.Handler(&samples.MyHandler[samples.MyRequest, samples.MyResponse]{})
+	RegisterPipeline(firstPipeline)
+	RegisterPipeline(secondPipeline)
+	RegisterHandler(&samples.MyHandler[samples.MyRequest, samples.MyResponse]{})
 
 	// When
 	response, err := Send[samples.MyRequest, samples.MyResponse](request, nil)
@@ -89,7 +88,7 @@ func (s *GodiatorTestSuite) TestGodiatorPublish() {
 	// Given
 	request := samples.MySubscriptionRequest{Id: 1}
 	subscriber := &samples.MySubscriptionHandler[samples.MySubscriptionRequest]{}
-	register.Subscriber(subscriber)
+	RegisterSubscriber(subscriber)
 
 	// When
 	Publish[samples.MySubscriptionRequest](request, nil)

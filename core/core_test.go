@@ -3,6 +3,7 @@ package core
 import (
 	"testing"
 
+	"github.com/baranius/godiator/pipeline"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -36,19 +37,18 @@ func TestRunHandlerCoreTestSuite(t *testing.T) {
 }
 
 func (s *HandlerCoreTestSuite) TestHandlerActions() {
-	request := SampleRequest{Id: 1}
 	handler := SampleHandler[SampleRequest, SampleResponse]{}
 
 	AddHandler[SampleRequest, SampleResponse](&handler)
 
-	h, ok := GetHandler[SampleRequest, SampleResponse](request)
+	h, ok := GetHandler[SampleRequest, SampleResponse]()
 
 	s.Suite.True(ok)
 	s.Suite.NotNil(h)
 
 	RemoveHandler[SampleRequest]()
 
-	h, ok = GetHandler[SampleRequest, SampleResponse](request)
+	h, ok = GetHandler[SampleRequest, SampleResponse]()
 
 	s.Suite.False(ok)
 	s.Suite.Nil(h)
@@ -74,19 +74,18 @@ func TestRunSubscriberCoreTestSuite(t *testing.T) {
 }
 
 func (s *SubscriberCoreTestSuite) TestSubscriberActions() {
-	request := SubscriberRequest{Id: 1}
 	subscriber := SubscriberHandler[SubscriberRequest]{}
 
 	AddSubscriber[SubscriberRequest](&subscriber)
 
-	subscribers := GetSubscribers(request)
+	subscribers := GetSubscribers[SubscriberRequest]()
 
 	s.Suite.NotNil(subscribers)
 	s.Suite.NotEmpty(subscribers)
 
-	RemoveSubscriber(SubscriberRequest{})
+	RemoveSubscriber[SubscriberRequest]()
 
-	subscribers = GetSubscribers(request)
+	subscribers = GetSubscribers[SubscriberRequest]()
 
 	s.Suite.Empty(subscribers)
 }
@@ -94,7 +93,7 @@ func (s *SubscriberCoreTestSuite) TestSubscriberActions() {
 // ---- PIPELINE TESTS -----
 type (
 	SamplePipeline struct {
-		Pipeline
+		pipeline.BasePipeline
 	}
 )
 

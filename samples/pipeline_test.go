@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/baranius/godiator"
-	"github.com/baranius/godiator/register"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -19,10 +18,10 @@ func TestPipelineIntegrationTestSuite(t *testing.T) {
 func (s *PipelineIntegrationTestSuite) TestPipelineInterceptedSuccesfully() {
 	// Given
 	loggingPipeline := &LoggingPipeline{}
-	register.Pipeline(loggingPipeline)
+	godiator.RegisterPipeline(loggingPipeline)
 
 	request := MyRequest{Id: 1}
-	register.Handler(&MyHandler[MyRequest, MyResponse]{})
+	godiator.RegisterHandler(&MyHandler[MyRequest, MyResponse]{})
 
 	// When
 	response, err := godiator.Send[MyRequest, MyResponse](request, nil)
@@ -38,10 +37,10 @@ func (s *PipelineIntegrationTestSuite) TestPipelineInterceptedSuccesfully() {
 func (s *PipelineIntegrationTestSuite) TestPipelineHandlesErrorSuccesfully() {
 	// Given
 	errorPipeline := &LoggingPipeline{}
-	register.Pipeline(errorPipeline)
+	godiator.RegisterPipeline(errorPipeline)
 
 	request := MyRequest{Id: 1}
-	register.Handler(&MyFailedHandler[MyRequest, MyResponse]{})
+	godiator.RegisterHandler(&MyFailedHandler[MyRequest, MyResponse]{})
 
 	// When
 	response, err := godiator.Send[MyRequest, MyResponse](request, nil)
