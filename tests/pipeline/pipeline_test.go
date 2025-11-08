@@ -1,8 +1,9 @@
-package pipeline
+package tests
 
 import (
 	"testing"
 
+	"github.com/baranius/godiator/pipeline"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -15,10 +16,10 @@ func TestRunPipelineTestSuite(t *testing.T) {
 }
 
 func (s *PipelineTestSuite) TestPipelineActions() {
-	pipeline := &BasePipeline{}
+	pipeline := &pipeline.BasePipeline{}
 	s.Suite.NotNil(pipeline)
 
-	nextPipeline := &BasePipeline{}
+	nextPipeline := &pipeline.BasePipeline{}
 	pipeline.SetNext(nextPipeline)
 
 	s.Suite.Equal(nextPipeline, pipeline.Next())
