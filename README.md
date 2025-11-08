@@ -1,301 +1,632 @@
 # godiator
 
-Easy to use mediator implementation in Golang. Provides in-process messaging ability to your apps.
+Easy to use mediator implementation in Golang. Provides in-process messaging ability to your apps with full type safety using Go generics.
 
-Usage examples:
-- [Echo](https://github.com/baranius/godiator-echo)
-- [gin](https://github.com/baranius/godiator-gin)
+## Features
+
+- **Type-safe**: Uses Go generics for compile-time type checking
+- **Simple API**: Clean and intuitive interface
+- **Handlers**: Request/Response pattern for synchronous operations
+- **Subscriptions**: Fire-and-forget pattern for asynchronous notifications
+- **Pipelines**: Interceptor pattern for cross-cutting concerns
+- **Mocking**: Built-in mocking support for testing
+- **Zero dependencies**: No external dependencies beyond standard library
 
 ## Installation
 
-You should install godiator via Go package manager:
+Install godiator via Go package manager:
 
+```bash
+go get -v github.com/baranius/godiator
 ```
-$ go get -v github.com/baranius/godiator
-```
 
-## Usage
+**Requirements**: Go 1.23 or higher
 
-Use **GetInstance()** method to get **godiator** object. Take a look to complete [API](#api) reference for details.
+## Quick Start
 
 ```go
-type GetItemController struct {
-	g godiator.IGodiator
+package main
+
+import (
+	"fmt"
+	
+	"github.com/baranius/godiator"
+	"github.com/baranius/godiator/register"
+)
+
+// Define request and response types
+type GetUserRequest struct {
+	UserID int
 }
 
-func NewGetItemController() *GetItemController {
-	return &GetItemController{g: godiator.GetInstance()}
+type GetUserResponse struct {
+	UserID   int
+	Username string
+	Email    string
+}
+
+// Define handler
+type GetUserHandler struct{}
+
+func (h *GetUserHandler) Handle(request GetUserRequest, params ...any) (GetUserResponse, error) {
+	// Your business logic here
+	return GetUserResponse{
+		UserID:   request.UserID,
+		Username: "john_doe",
+		Email:    "john@example.com",
+	}, nil
+}
+
+func main() {
+	// Register handler
+	register.Handler(GetUserRequest{}, &GetUserHandler{})
+	
+	// Send request
+	request := GetUserRequest{UserID: 123}
+	response, err := godiator.Send[GetUserRequest, GetUserResponse](request)
+	
+	if err != nil {
+		panic(err)
+	}
+	
+	fmt.Printf("User: %s (%s)\n", response.Username, response.Email)
 }
 ```
+
+## Usage Examples
+
+Complete usage examples:
+- [Echo](https://github.com/baranius/godiator-echo)
+- [gin](https://github.com/baranius/godiator-gin)
 
 ## Handlers
 
-[Handlers](#handler) are the main objects that runs your business logic.
+Handlers implement the request/response pattern. They are the main objects that execute your business logic.
 
-A handler is a struct that contains **Handle** method. 
+A handler is a struct that implements the `Handler[TRequest, TResponse]` interface by providing a `Handle` method.
 
-**Handle** method should get a request object and return a tuple of response object and error.
+### Handler Interface
+
+```go
+type Handler[TRequest any, TResponse any] interface {
+	Handle(request TRequest, params ...any) (TResponse, error)
+}
+```
+
+### Basic Handler Example
 
 ```go
 type (
-	SampleRequest struct{
+	SampleRequest struct {
 		PayloadString *string
 	}
 
-	SampleResponse struct{
+	SampleResponse struct {
 		ResultString *string
 	}
 
-	SampleHandler struct{
-	}
+	SampleHandler struct{}
 )
 
-//Registering handlers in godiator requires an init function.
-func NewSampleHandler() interface{} {
-	return &SampleHandler{}
-}
-
-func (h *SampleHandler) Handle(request *SampleRequest) (*SampleResponse, error){
-	return &SampleResponse{ResultString: request.PayloadString}, nil
+func (h *SampleHandler) Handle(request SampleRequest, params ...any) (SampleResponse, error) {
+	return SampleResponse{
+		ResultString: request.PayloadString,
+	}, nil
 }
 ```
 
-**Handle** method can take additional parameters 
+### Handler with Additional Parameters
+
+The `Handle` method can accept additional parameters (like `context.Context`) through the variadic `params` parameter:
 
 ```go
-type (
-	SampleRequest struct{
-	    PayloadString *string
-	}
+import "context"
 
-	SampleResponse struct{
-	    ResultString *string
+func (h *SampleHandler) Handle(request SampleRequest, params ...any) (SampleResponse, error) {
+	// Extract context if provided
+	var ctx context.Context
+	if len(params) > 0 {
+		if c, ok := params[0].(context.Context); ok {
+			ctx = c
+		}
 	}
-
-	SampleHandler struct{
-	}
-)
-
-func NewSampleHandler() interface{} {
-	return &SampleHandler{}
+	
+	// Use context in your business logic
+	_ = ctx
+	
+	return SampleResponse{
+		ResultString: request.PayloadString,
+	}, nil
 }
+```
 
-func (h *SampleHandler) Handle(request *SampleRequest, ctx context.Context) (*SampleResponse, error){
-	return &SampleResponse{ResultString: request.PayloadString}, nil
+### Registering Handlers
+
+Use `register.Handler()` to register your handler. The first parameter is a zero-value instance of your request type used for type registration.
+
+```go
+func init() {
+	register.Handler(SampleRequest{}, &SampleHandler{})
 }
-``` 
+```
 
-#### Registering Handlers
-
-**Register** method takes request model
-and handler's initializer method as arguments.
+You can also register handlers dynamically:
 
 ```go
 func RegisterHandlers() {
-    g := godiator.GetInstance()
-    
-    g.Register(&SampleRequest{}, NewSampleHandler)
+	register.Handler(SampleRequest{}, &SampleHandler{})
+	register.Handler(OtherRequest{}, &OtherHandler{})
 }
 ```
 
-#### Calling Handlers 
+### Calling Handlers
 
-Calling **Send** method with request object executes the related handler. 
+Use `godiator.Send[TRequest, TResponse]()` to execute the handler for a given request:
 
 ```go
-type GetItemController struct {
-    g godiator.IGodiator
+payloadValue := "sample_value"
+request := SampleRequest{PayloadString: &payloadValue}
+
+response, err := godiator.Send[SampleRequest, SampleResponse](request)
+
+if err != nil {
+	// Handle error
 }
 
-func NewGetItemController() *GetItemController {
-    return &GetItemController{g: godiator.GetInstance()}
-}
-
-func (c *GetItemController) GetItem() {
-    payloadValue := "sample_value"
-    request := &SampleRequest{PayloadString: &payloadValue}
-    
-    response, err := c.g.Send(request)
-
-    // If your handle method takes additional parameters, don't forget to pass them to 'Send'
-    response, err := c.g.Send(request, context.TODO())
-}
+// Use response
+fmt.Println(*response.ResultString)
 ```
-___
+
+### Calling Handlers with Additional Parameters
+
+Pass additional parameters as variadic arguments:
+
+```go
+import "context"
+
+ctx := context.Background()
+response, err := godiator.Send[SampleRequest, SampleResponse](request, ctx)
+```
+
+---
 
 ## Subscriptions
 
-[Subscriptions](#subscription) are observers. 
-They operate quite similar to message broadcasting.
+Subscriptions implement the observer pattern (fire-and-forget). They operate similar to message broadcasting and are executed asynchronously in goroutines.
+
+### Subscriber Interface
 
 ```go
-type (
-	SubscriptionRequest struct {
-        PayloadString *string
-    }
-    
-    SubscriptionHandler struct {}
-) 
-
-func NewSubscriptionHandler() interface{} {
-	return &SubscriptionHandler{}
-}
-
-func (n *SubscriptionHandler) Handle(request interface{}) {
-	r := request.(*SubscriptionRequest)
-	fmt.Printf("Subscription called with payload : '%v'", *r.PayloadString)
+type Subscriber[TRequest any] interface {
+	Handle(request TRequest, params ...any)
 }
 ```
 
-#### Registering Subscriptions
+**Note**: Subscribers do not return values or errors. They are fire-and-forget operations.
 
-**RegisterSubscription** method takes request model 
-and related handler(s).
+### Basic Subscriber Example
+
+```go
+import (
+	"fmt"
+	"time"
+)
+
+type (
+	UserCreatedEvent struct {
+		UserID   int
+		Username string
+		Email    string
+		CreatedAt  time.Time
+	}
+
+	EmailNotificationSubscriber struct{}
+	LoggingSubscriber struct{}
+)
+
+func (s *EmailNotificationSubscriber) Handle(request UserCreatedEvent, params ...any) {
+	// Send welcome email
+	fmt.Printf("Sending welcome email to %s\n", request.Email)
+}
+
+func (s *LoggingSubscriber) Handle(request UserCreatedEvent, params ...any) {
+	// Log the event
+	fmt.Printf("User created: %d at %s\n", request.UserID, request.CreatedAt)
+}
+```
+
+### Registering Subscriptions
+
+Use `register.Subscriber()` to register one or more subscribers for a request type:
 
 ```go
 func RegisterSubscriptions() {
-    g := godiator.GetInstance()
-    
-    g.RegisterSubscription(&SubscriptionRequest{}, NewSubscriptionHandler, NewSubscriptionHandlerA, NewSubscriptionHandlerB)
+	register.Subscriber(
+		UserCreatedEvent{},
+		&EmailNotificationSubscriber{},
+		&LoggingSubscriber{},
+	)
 }
 ```
 
-#### Calling Subscriptions 
+### Calling Subscriptions
 
-Calling **Publish** method with request object notifies the related handler(s). 
+Use `godiator.Publish[TRequest]()` to notify all registered subscribers:
 
 ```go
-type GetItemController struct {
-    g godiator.IGodiator
+import (
+	"github.com/baranius/godiator"
+	"time"
+)
+
+event := UserCreatedEvent{
+	UserID:   123,
+	Username: "john_doe",
+	Email:    "john@example.com",
+	CreatedAt: time.Now(),
 }
 
-func NewGetItemController() *GetItemController {
-    return &GetItemController{g: godiator.GetInstance()}
-}
-
-func (c *GetItemController) GetItem() {
-    payloadValue := "sample_value"
-    request := &SubscriptionRequest{PayloadString: &payloadValue}
-    
-    c.g.Publish(request)
-}
+godiator.Publish[UserCreatedEvent](event)
 ```
-___
+
+**Note**: Subscribers are executed asynchronously in separate goroutines. If you need to wait for completion, you must implement your own synchronization mechanism.
+
+### Calling Subscriptions with Additional Parameters
+
+```go
+import "context"
+
+ctx := context.Background()
+godiator.Publish[UserCreatedEvent](event, ctx)
+```
+
+---
 
 ## Pipelines
 
-[Pipelines](#pipeline) are interceptors that runs before each handler call.
+Pipelines are interceptors that run before each handler call. They allow you to implement cross-cutting concerns like validation, logging, authentication, etc.
 
-They should be derived from **godiator.Pipeline** struct and include a **Handle** method just like handlers. 
-     
-*Important:  **params ...interface{}** is optional. But you should define them in your Pipeline's Handle method*
+### Pipeline Structure
 
+Pipelines must embed `core.Pipeline` and implement the `Handle` method:
 
-```go 
+```go
+import (
+	"errors"
+	
+	"github.com/baranius/godiator/core"
+)
+
 type ValidationPipeline struct {
-	godiator.Pipeline
+	core.Pipeline
 }
 
-func (p *ValidationPipeline) Handle(request interface{}, params ...interface{}) (interface{}, error) {
-	r := request.(*handler.SampleRequest)
-
+func (p *ValidationPipeline) Handle(request any, params ...any) (any, error) {
+	// Type assert to your request type
+	r := request.(*SampleRequest)
+	
+	// Perform validation
 	if r.PayloadString == nil {
-		return nil, errors.New("PayloadString_should_not_be_null")
+		return nil, errors.New("PayloadString should not be null")
 	}
-
+	
+	// Call next pipeline or handler
 	return p.Next().Handle(request, params...)
 }
 ```
 
-#### Registering Pipelines 
+**Important**: 
+- Always call `p.Next().Handle()` to continue the pipeline chain
+- If validation fails, return an error without calling `Next()`
+- The `params ...any` parameter is optional but should be defined in your Pipeline's Handle method signature
 
-Call **RegisterPipeline** method to register pipelines.
+### Registering Pipelines
 
-*Important: Pipelines run in the ***definition order***.*
+Use `register.Pipeline()` to register pipelines. **Pipelines run in the order they are registered**.
 
 ```go
+import "github.com/baranius/godiator/register"
+
 func RegisterPipelines() {
-    g := godiator.GetInstance()
-    
-    g.RegisterPipeline(&ValidationPipeline{}) // Runs first
-    g.RegisterPipeline(&SomeOtherPipeline{})
+	register.Pipeline(&ValidationPipeline{})      // Runs first
+	register.Pipeline(&LoggingPipeline{})         // Runs second
+	register.Pipeline(&AuthenticationPipeline{})  // Runs third
+	// Handler executes after all pipelines
 }
 ```
+
+### Pipeline Execution Order
+
+Pipelines are executed in the order they are registered:
+1. First registered pipeline
+2. Second registered pipeline
+3. ...
+4. Last registered pipeline
+5. Handler
+
+Each pipeline can:
+- Modify the request before passing it to the next pipeline
+- Validate the request and return an error
+- Log or monitor the execution
+- Modify the response after the handler executes
+
+---
 
 ## Mocking
 
-You can mock Send and Notify methods of **godiator** via **MockGodiator**.
+godiator provides a built-in mocking package (`mockiator`) for testing your handlers and subscribers.
 
-The only thing you need to do is delegating **OnSend** or **OnNotify** methods.
+### Mocking Handlers
 
-#### OnSend
+Use `mockiator.OnSend()` to mock handler execution:
+
 ```go
-mockGodiator := MockGodiator{}
+import (
+	"github.com/baranius/godiator"
+	"github.com/baranius/godiator/mockiator"
+)
 
-mockGodiator.OnSend = func(request interface{}, params ...interface{}) (i interface{}, err error){
-    return &Response{}, nil
+func TestHandler(t *testing.T) {
+	// Setup mock
+	mockHandler := mockiator.OnSend[SampleRequest, SampleResponse](
+		SampleRequest{},
+		func(request SampleRequest, params ...any) (SampleResponse, error) {
+			return SampleResponse{
+				ResultString: request.PayloadString,
+			}, nil
+		},
+	)
+	
+	// Execute
+	request := SampleRequest{PayloadString: stringPtr("test")}
+	response, err := godiator.Send[SampleRequest, SampleResponse](request)
+	
+	// Verify
+	assert.NoError(t, err)
+	assert.True(t, mockHandler.IsCalled)
+	assert.Equal(t, 1, mockHandler.TimesCalled)
+	assert.Equal(t, "test", *response.ResultString)
+}
+
+func stringPtr(s string) *string {
+	return &s
 }
 ```
 
-#### OnNotify
+### Mocking Subscribers
+
+Use `mockiator.OnPublish()` to mock subscriber execution:
 
 ```go
-mockGodiator := MockGodiator{}
+import (
+	"github.com/baranius/godiator"
+	"github.com/baranius/godiator/mockiator"
+)
 
-mockGodiator.OnNotify = func(request interface{}, params ...interface{}) {
-    fmt.Print("Called")
+func TestSubscriber(t *testing.T) {
+	// Setup mock
+	mockSubscriber := mockiator.OnPublish[UserCreatedEvent](
+		UserCreatedEvent{},
+		func(request UserCreatedEvent, params ...any) {
+			// Mock behavior
+			fmt.Printf("Mock: User %d created\n", request.UserID)
+		},
+	)
+	
+	// Execute
+	event := UserCreatedEvent{UserID: 123}
+	godiator.Publish[UserCreatedEvent](event)
+	
+	// Wait for async execution
+	time.Sleep(100 * time.Millisecond)
+	
+	// Verify
+	assert.True(t, mockSubscriber.IsCalled)
+	assert.Equal(t, 1, mockSubscriber.TimesCalled)
 }
 ```
 
-## API
+### Mock Tracking
 
-### Godiator
+Both `OnSend()` and `OnPublish()` return mock objects with tracking capabilities:
 
-##### RegisterPipeline(h IPipeline)
+- `IsCalled`: Boolean indicating if the mock was called
+- `TimesCalled`: Number of times the mock was called
 
-- **h:** `A struct derived from godiator.Pipeline`
+---
 
-##### Register(request interface{}, handler func()interface{})
+## API Reference
 
-- **request:** `Interface`
-- **handler:** `Initialize function which returns Handler instance`
+### Package: `godiator`
 
-##### RegisterSubscription(request interface{}, handler func()interface{})
- 
- - **request:** `Interface`
- - **handler:** `Initialize function which returns Subscription handler instance`
- 
-##### Send(request interface{}, params ...interface{}) (interface{}, error)
+#### `Send[TRequest, TResponse](request TRequest, params ...any) (TResponse, error)`
 
-- **request:** `Handler's request model`
-- **params (optional):** `Optional list of objects`
+Executes the handler registered for the given request type.
 
-##### Publish(request interface{}, params ...interface{})
+- **Type Parameters**:
+  - `TRequest`: The request type (must match registered request type)
+  - `TResponse`: The expected response type
+- **Parameters**:
+  - `request`: The request object to send
+  - `params`: Optional variadic parameters (e.g., `context.Context`)
+- **Returns**:
+  - `TResponse`: The response from the handler
+  - `error`: Error if handler execution fails or handler not found (panics if handler not found)
 
-- **request:** `Handler's request model`
-- **params (optional):** `Optional list of objects`
+**Example**:
+```go
+response, err := godiator.Send[GetUserRequest, GetUserResponse](request)
+```
 
-### Handler
+#### `Publish[TRequest](request TRequest, params ...any)`
 
-##### Handle(request interface{}, params ...interface{}) (interface{}, error)
+Notifies all subscribers registered for the given request type. Subscribers are executed asynchronously in goroutines.
 
-- **request:** `Handler's request model`
-- **params (optional):** `Optional list of objects`
+- **Type Parameters**:
+  - `TRequest`: The request type (must match registered request type)
+- **Parameters**:
+  - `request`: The request object to publish
+  - `params`: Optional variadic parameters
+- **Panics**: If no subscribers are registered for the request type
 
-### Subscription
+**Example**:
+```go
+godiator.Publish[UserCreatedEvent](event)
+```
 
-##### Publish(request interface{}, params ...interface{}) 
+### Package: `register`
 
-- **request:** `Handler's request model`
-- **params (optional):** `Optional list of objects`
+#### `Handler[TRequest, TResponse](request TRequest, handler core.Handler[TRequest, TResponse])`
 
-### Pipeline
+Registers a handler for a specific request type.
 
-##### Handle(request interface{}, params ...interface{}) (interface{}, error) 
+- **Type Parameters**:
+  - `TRequest`: The request type
+  - `TResponse`: The response type
+- **Parameters**:
+  - `request`: Zero-value instance of the request type (used for type registration)
+  - `handler`: Handler instance implementing `Handler[TRequest, TResponse]`
 
-- **request:** `Handler's request model`
-- **params (optional):** `Optional list of objects`
+**Example**:
+```go
+register.Handler(GetUserRequest{}, &GetUserHandler{})
+```
+
+#### `Subscriber[TRequest](request TRequest, subscribers ...core.Subscriber[TRequest])`
+
+Registers one or more subscribers for a specific request type.
+
+- **Type Parameters**:
+  - `TRequest`: The request type
+- **Parameters**:
+  - `request`: Zero-value instance of the request type
+  - `subscribers`: One or more subscriber instances implementing `Subscriber[TRequest]`
+
+**Example**:
+```go
+register.Subscriber(UserCreatedEvent{}, &EmailSubscriber{}, &LoggingSubscriber{})
+```
+
+#### `Pipeline(p *core.Pipeline)`
+
+Registers a pipeline interceptor. Pipelines are executed in registration order before handlers.
+
+- **Parameters**:
+  - `p`: Pipeline instance embedding `core.Pipeline`
+
+**Example**:
+```go
+register.Pipeline(&ValidationPipeline{})
+```
+
+### Package: `core`
+
+#### `Handler[TRequest, TResponse]` Interface
+
+Interface that handlers must implement.
+
+```go
+type Handler[TRequest any, TResponse any] interface {
+	Handle(request TRequest, params ...any) (TResponse, error)
+}
+```
+
+#### `Subscriber[TRequest]` Interface
+
+Interface that subscribers must implement.
+
+```go
+type Subscriber[TRequest any] interface {
+	Handle(request TRequest, params ...any)
+}
+```
+
+#### `Pipeline` Struct
+
+Base struct for pipeline implementations. Must be embedded in your pipeline types.
+
+```go
+type Pipeline struct {
+	nextPipeline pipeline
+}
+
+func (p *Pipeline) Next() pipeline
+func (p *Pipeline) SetNext(nextPipeline pipeline)
+func (p *Pipeline) Handle(request any, params ...any) (any, error)
+```
+
+### Package: `mockiator`
+
+#### `OnSend[TRequest, TResponse](request TRequest, handler func(TRequest, ...any) (TResponse, error)) *mockHandler[TRequest, TResponse]`
+
+Creates a mock handler for testing.
+
+- **Returns**: Mock handler with `IsCalled` and `TimesCalled` properties
+
+**Example**:
+```go
+mock := mockiator.OnSend[SampleRequest, SampleResponse](SampleRequest{}, handlerFunc)
+```
+
+#### `OnPublish[TRequest](request TRequest, handler func(TRequest, ...any)) *mockSubscriber[TRequest]`
+
+Creates a mock subscriber for testing.
+
+- **Returns**: Mock subscriber with `IsCalled` and `TimesCalled` properties
+
+**Example**:
+```go
+mock := mockiator.OnPublish[UserCreatedEvent](UserCreatedEvent{}, handlerFunc)
+```
+
+---
+
+## Best Practices
+
+1. **Registration**: Register all handlers, subscribers, and pipelines during application initialization (e.g., in `init()` functions or setup functions called from `main()`)
+
+2. **Type Safety**: Always use concrete types for requests and responses. Avoid using `interface{}` for better type safety
+
+3. **Error Handling**: Always check errors returned from `Send()` operations
+
+4. **Context**: Use `context.Context` as the first parameter when you need cancellation or timeout support
+
+5. **Subscribers**: Remember that subscribers run asynchronously. Don't rely on execution order between subscribers
+
+6. **Pipelines**: Keep pipeline logic focused and single-purpose. Chain multiple pipelines for complex cross-cutting concerns
+
+7. **Testing**: Use `mockiator` package for unit testing to avoid dependencies on actual handlers
+
+---
+
+## Examples
+
+See the `samples/` directory for complete working examples:
+- Handler examples (`samples/handler.go`)
+- Subscriber examples (`samples/subscription.go`)
+- Test examples (`samples/*_test.go`)
+
+---
+
+## License
+
+See [LICENSE](LICENSE) file for details.
 
 ## Contribution
 
-You're very welcome to contribute the project. Please feel free to contribute or asking questions. 
+Contributions are welcome! Please feel free to:
+- Open issues for bugs or feature requests
+- Submit pull requests
+- Ask questions or provide feedback
+
+---
+
+## Changelog
+
+### Current Version
+
+- **Type-safe API**: Full support for Go generics
+- **Simplified API**: No singleton pattern, direct function calls
+- **Pipeline support**: Interceptor pattern for cross-cutting concerns
+- **Mocking support**: Built-in testing utilities
+- **Async subscriptions**: Fire-and-forget pattern with goroutines

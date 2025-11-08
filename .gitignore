@@ -16,5 +16,11 @@
 # Project-local glide cache, RE: https://github.com/Masterminds/glide/issues/736
 .glide/
 
-.idea/*
-.test-coverage/*
+# IDE specific folders
+.idea
+.vscode
+
+# Test coverage folders
+.test-coverage
+
+TODO.md

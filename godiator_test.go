@@ -1,116 +1,100 @@
 package godiator
 
 import (
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/suite"
-	"reflect"
 	"testing"
+	"time"
+
+	"github.com/baranius/godiator/register"
+	"github.com/baranius/godiator/samples"
+	"github.com/stretchr/testify/suite"
 )
 
 type GodiatorTestSuite struct {
 	suite.Suite
 }
 
-func TestGodiatorSuite(t *testing.T) {
+func TestGodiatorTestSuite(t *testing.T) {
 	suite.Run(t, new(GodiatorTestSuite))
 }
 
-func (s *GodiatorTestSuite) Test_GetInstance() {
+func (s *GodiatorTestSuite) TestGodiatorSend() {
+	// Given
+	request := samples.MyRequest{Id: 1}
+	register.Handler(&samples.MyHandler[samples.MyRequest, samples.MyResponse]{})
+
 	// When
-	g := GetInstance()
-	gdtr := g.(*godiator)
+	response, err := Send[samples.MyRequest, samples.MyResponse](request, nil)
 
 	// Then
-	assert.IsType(s.T(), make(map[reflect.Type]func() interface{}), gdtr.handlers)
-	assert.IsType(s.T(), make(map[reflect.Type][]func() interface{}), gdtr.notifications)
-	assert.IsType(s.T(), make([]IPipeline, 0), gdtr.pipelines)
+	s.Suite.Nil(err)
+	s.Suite.Equal(samples.MyResponse{Id: 1, Name: "John Doe", Status: "Unknown"}, response)
 }
 
-func (s *GodiatorTestSuite) Test_GetHandlerResponse() {
+func (s *GodiatorTestSuite) TestGodiatorSend_WithPipeline() {
 	// Given
-	g := GetInstance()
-	g.Register(&sampleRequest{}, newSampleHandler)
+	request := samples.MyRequest{Id: 2}
+	pipeline := &samples.LoggingPipeline{}
+	register.Pipeline(pipeline)
+	register.Handler(&samples.MyHandler[samples.MyRequest, samples.MyResponse]{})
 
 	// When
-	responseObject := g.GetHandlerResponse(&sampleRequest{})
+	response, err := Send[samples.MyRequest, samples.MyResponse](request, nil)
 
 	// Then
-	assert.NotNil(s.T(), responseObject)
+	s.Suite.Nil(err)
+	s.Suite.Equal(samples.MyResponse{Id: 2, Name: "John Doe", Status: "Unknown"}, response)
+	s.Suite.Empty(pipeline.ErrorMessage)
+	s.Suite.Equal(`request ({"Id":2}) | response ({"Id":2,"Name":"John Doe","Status":"Unknown"})`, pipeline.LogMessage)
 }
 
-func (s *GodiatorTestSuite) Test_Send_Should_Panic_When_Handler_Not_Found() {
+func (s *GodiatorTestSuite) TestGodiatorSend_WithMultiplePipeline() {
 	// Given
-	g := GetInstance()
-
-	g.Register(&sampleRequest{}, newSampleHandler)
-
-	request := &failingRequest{}
+	request := samples.MyRequest{Id: 3}
+	firstPipeline := &samples.LoggingPipeline{}
+	secondPipeline := &samples.LoggingPipeline{}
+	register.Pipeline(firstPipeline)
+	register.Pipeline(secondPipeline)
+	register.Handler(&samples.MyHandler[samples.MyRequest, samples.MyResponse]{})
 
 	// When
-	assert.Panics(s.T(), func() {
-		g.Send(request)
-	})
-}
-
-func (s *GodiatorTestSuite) Test_Send_Should_Panic_When_Handler_Not_Have_Handle_Func() {
-	// Given
-	g := GetInstance()
-
-	g.Register(&failingRequest{}, newFailingHandler)
-
-	request := &failingRequest{}
-
-	// When
-	assert.Panics(s.T(), func() {
-		g.Send(request)
-	})
-}
-
-func (s *GodiatorTestSuite) Test_Send_Should_Be_Executed() {
-	// Given
-	g := GetInstance()
-
-	g.Register(&sampleRequest{}, newSampleHandler)
-
-	sampleData := "test-string"
-	request := &sampleRequest{PayloadString: &sampleData}
-
-	// When
-	response, err := g.Send(request)
+	response, err := Send[samples.MyRequest, samples.MyResponse](request, nil)
 
 	// Then
-	assert.Nil(s.T(), err)
-	assert.NotNil(s.T(), response)
-	resp := response.(*sampleResponse)
-	assert.Equal(s.T(), sampleData, *resp.ResultString)
+	s.Suite.Nil(err)
+	s.Suite.Equal(samples.MyResponse{Id: 3, Name: "John Doe", Status: "Unknown"}, response)
+	s.Suite.Empty(secondPipeline.ErrorMessage)
+	s.Suite.Equal(`request ({"Id":3}) | response ({"Id":3,"Name":"John Doe","Status":"Unknown"})`, secondPipeline.LogMessage)
+	s.Suite.Empty(firstPipeline.ErrorMessage)
+	s.Suite.Equal(`request ({"Id":3}) | response ({"Id":3,"Name":"John Doe","Status":"Unknown"})`, firstPipeline.LogMessage)
 }
 
-func (s *GodiatorTestSuite) Test_Send_Should_Be_Executed_With_Pipeline() {
+type UnregisteredRequest struct {
+	Value string
+}
+
+func (s *GodiatorTestSuite) TestGodiatorSend_HandlerNotFound() {
 	// Given
-	g := GetInstance()
-
-	g.Register(&sampleRequest{}, newSampleHandler)
-	g.RegisterPipeline(&validationPipeline{})
-
-	request := &sampleRequest{}
+	request := UnregisteredRequest{Value: "test"}
 
 	// When
-	response, err := g.Send(request)
+	response, err := Send[UnregisteredRequest, samples.MyResponse](request, nil)
 
 	// Then
-	assert.Nil(s.T(), response)
-	assert.NotNil(s.T(), err)
+	s.Suite.NotNil(err)
+	s.Suite.EqualError(err, `handler not found for "godiator.UnregisteredRequest"`)
+	s.Suite.Equal(samples.MyResponse{}, response)
 }
 
-func (s *GodiatorTestSuite) Test_Subscriber_Should_Be_Executed() {
+func (s *GodiatorTestSuite) TestGodiatorPublish() {
 	// Given
-	g := GetInstance()
-
-	g.RegisterSubscription(&subscriberRequest{}, newSubscriberHandler)
-
-	sampleData := "test-string"
-	request := &subscriberRequest{PayloadString: &sampleData}
+	request := samples.MySubscriptionRequest{Id: 1}
+	subscriber := &samples.MySubscriptionHandler[samples.MySubscriptionRequest]{}
+	register.Subscriber(subscriber)
 
 	// When
-	g.Publish(request)
+	Publish[samples.MySubscriptionRequest](request, nil)
+
+	// Then
+	time.Sleep(200 * time.Millisecond)
+	s.Suite.True(subscriber.IsHandlerExecuted)
 }
