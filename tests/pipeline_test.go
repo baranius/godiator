@@ -1,9 +1,10 @@
-package samples
+package tests
 
 import (
 	"testing"
 
 	"github.com/baranius/godiator"
+	"github.com/baranius/godiator/samples"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -17,14 +18,14 @@ func TestPipelineIntegrationTestSuite(t *testing.T) {
 
 func (s *PipelineIntegrationTestSuite) TestPipelineInterceptedSuccesfully() {
 	// Given
-	loggingPipeline := &LoggingPipeline{}
+	loggingPipeline := &samples.LoggingPipeline{}
 	godiator.RegisterPipeline(loggingPipeline)
 
-	request := MyRequest{Id: 1}
-	godiator.RegisterHandler(&MyHandler[MyRequest, MyResponse]{})
+	request := samples.MyRequest{Id: 1}
+	godiator.RegisterHandler(&samples.MyHandler[samples.MyRequest, samples.MyResponse]{})
 
 	// When
-	response, err := godiator.Send[MyRequest, MyResponse](request, nil)
+	response, err := godiator.Send[samples.MyRequest, samples.MyResponse](request, nil)
 
 	// Then
 	s.Suite.NoError(err)
@@ -36,14 +37,14 @@ func (s *PipelineIntegrationTestSuite) TestPipelineInterceptedSuccesfully() {
 
 func (s *PipelineIntegrationTestSuite) TestPipelineHandlesErrorSuccesfully() {
 	// Given
-	errorPipeline := &LoggingPipeline{}
+	errorPipeline := &samples.LoggingPipeline{}
 	godiator.RegisterPipeline(errorPipeline)
 
-	request := MyRequest{Id: 1}
-	godiator.RegisterHandler(&MyFailedHandler[MyRequest, MyResponse]{})
+	request := samples.MyRequest{Id: 1}
+	godiator.RegisterHandler(&samples.MyFailedHandler[samples.MyRequest, samples.MyResponse]{})
 
 	// When
-	response, err := godiator.Send[MyRequest, MyResponse](request, nil)
+	response, err := godiator.Send[samples.MyRequest, samples.MyResponse](request, nil)
 
 	// Then
 	s.Suite.Equal(0, response.Id)

@@ -1,10 +1,11 @@
-package samples
+package tests
 
 import (
 	"testing"
 	"time"
 
 	"github.com/baranius/godiator"
+	"github.com/baranius/godiator/samples"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -18,12 +19,12 @@ func TestSubscriberIntegrationTestSuite(t *testing.T) {
 
 func (s *SubscriberIntegrationTestSuite) TestSubscriberExecution() {
 	// Given
-	req := MySubscriptionRequest{
+	req := samples.MySubscriptionRequest{
 		Id:     1,
 		Status: true,
 	}
 
-	mySubscriber := &MySubscriptionHandler[MySubscriptionRequest]{IsHandlerExecuted: false}
+	mySubscriber := &samples.MySubscriptionHandler[samples.MySubscriptionRequest]{IsHandlerExecuted: false}
 	godiator.RegisterSubscriber(mySubscriber)
 
 	// When
@@ -36,13 +37,13 @@ func (s *SubscriberIntegrationTestSuite) TestSubscriberExecution() {
 
 func (s *SubscriberIntegrationTestSuite) TestMultipleSubscriberExecution() {
 	// Given
-	req := MySubscriptionRequest{
+	req := samples.MySubscriptionRequest{
 		Id:     1,
 		Status: true,
 	}
 
-	mySubscription := &MySubscriptionHandler[MySubscriptionRequest]{IsHandlerExecuted: false}
-	myOtherSubscription := &MyOtherSubscriptionHandler[MySubscriptionRequest]{IsHandlerExecuted: false}
+	mySubscription := &samples.MySubscriptionHandler[samples.MySubscriptionRequest]{IsHandlerExecuted: false}
+	myOtherSubscription := &samples.MyOtherSubscriptionHandler[samples.MySubscriptionRequest]{IsHandlerExecuted: false}
 
 	godiator.RegisterSubscriber(mySubscription)
 	godiator.RegisterSubscriber(myOtherSubscription)

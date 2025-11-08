@@ -1,9 +1,10 @@
-package samples
+package tests
 
 import (
 	"testing"
 
 	"github.com/baranius/godiator"
+	"github.com/baranius/godiator/samples"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -17,14 +18,14 @@ func TestHandlerIntegrationTestSuite(t *testing.T) {
 
 func (s *HandlerIntegrationTestSuite) TestHandlerExecutedSuccesfully() {
 	// Given
-	godiator.RegisterHandler(&MyHandler[MyRequest, MyResponse]{})
+	godiator.RegisterHandler(&samples.MyHandler[samples.MyRequest, samples.MyResponse]{})
 
-	request := MyRequest{
+	request := samples.MyRequest{
 		Id: 1,
 	}
 
 	// When
-	response, err := godiator.Send[MyRequest, MyResponse](request, nil)
+	response, err := godiator.Send[samples.MyRequest, samples.MyResponse](request, nil)
 
 	// Then
 	s.Suite.Nil(err)
@@ -34,14 +35,14 @@ func (s *HandlerIntegrationTestSuite) TestHandlerExecutedSuccesfully() {
 
 func (s *HandlerIntegrationTestSuite) TestHandlerFailedExecution() {
 	// Given
-	godiator.RegisterHandler(&MyFailedHandler[MyRequest, MyResponse]{})
+	godiator.RegisterHandler(&samples.MyFailedHandler[samples.MyRequest, samples.MyResponse]{})
 
-	request := MyRequest{
+	request := samples.MyRequest{
 		Id: 1,
 	}
 
 	// When
-	response, err := godiator.Send[MyRequest, MyResponse](request, nil)
+	response, err := godiator.Send[samples.MyRequest, samples.MyResponse](request, nil)
 
 	// Then
 	s.Suite.NotNil(err)

@@ -1,4 +1,4 @@
-package mockiator
+package tests
 
 import (
 	"fmt"
@@ -6,32 +6,16 @@ import (
 	"time"
 
 	"github.com/baranius/godiator"
+	"github.com/baranius/godiator/mockiator"
+	"github.com/baranius/godiator/samples"
 	"github.com/stretchr/testify/suite"
 )
 
-// Define Sample godiator boilerplate
-type (
-	SampleRequest struct {
-		Id int
-	}
-
-	SampleResponse struct {
-		Id   int
-		Name string
-	}
-
-	SampleHandler[S1 SampleRequest, S2 SampleResponse] struct{}
-)
-
-func (h *SampleHandler[S1, S2]) Handle(request SampleRequest, params ...any) (SampleResponse, error) {
-	return SampleResponse{}, nil
-}
-
 // Define an executer
-func HandlerExecuter(id int) (SampleResponse, error) {
-	request := SampleRequest{Id: id}
+func HandlerExecuter(id int) (samples.MyResponse, error) {
+	request := samples.MyRequest{Id: id}
 
-	return godiator.Send[SampleRequest, SampleResponse](request, nil)
+	return godiator.Send[samples.MyRequest, samples.MyResponse](request, nil)
 }
 
 // Define Sample Subscriber godiator boilerplate
@@ -64,9 +48,9 @@ func (s *MockiatorTestSuite) TestHandlerMocking() {
 	// Given
 	input := 10
 
-	execution := OnSend(func(request SampleRequest, params ...any) (SampleResponse, error) {
+	execution := mockiator.OnSend(func(request samples.MyRequest, params ...any) (samples.MyResponse, error) {
 		fmt.Println(request.Id)
-		return SampleResponse{
+		return samples.MyResponse{
 			Id:   10,
 			Name: "John Doe",
 		}, nil
@@ -87,7 +71,7 @@ func (s *MockiatorTestSuite) TestSubscriberMocking() {
 	// Given
 	input := 10
 
-	execution := OnPublish(func(request SubscriberRequest, params ...any) {
+	execution := mockiator.OnPublish(func(request SubscriberRequest, params ...any) {
 		// Logic here
 	})
 

@@ -1,9 +1,10 @@
-package godiator
+package tests
 
 import (
 	"testing"
 	"time"
 
+	"github.com/baranius/godiator"
 	"github.com/baranius/godiator/samples"
 	"github.com/stretchr/testify/suite"
 )
@@ -19,10 +20,10 @@ func TestGodiatorTestSuite(t *testing.T) {
 func (s *GodiatorTestSuite) TestGodiatorSend() {
 	// Given
 	request := samples.MyRequest{Id: 1}
-	RegisterHandler(&samples.MyHandler[samples.MyRequest, samples.MyResponse]{})
+	godiator.RegisterHandler(&samples.MyHandler[samples.MyRequest, samples.MyResponse]{})
 
 	// When
-	response, err := Send[samples.MyRequest, samples.MyResponse](request, nil)
+	response, err := godiator.Send[samples.MyRequest, samples.MyResponse](request, nil)
 
 	// Then
 	s.Suite.Nil(err)
@@ -33,11 +34,11 @@ func (s *GodiatorTestSuite) TestGodiatorSend_WithPipeline() {
 	// Given
 	request := samples.MyRequest{Id: 2}
 	pipeline := &samples.LoggingPipeline{}
-	RegisterPipeline(pipeline)
-	RegisterHandler(&samples.MyHandler[samples.MyRequest, samples.MyResponse]{})
+	godiator.RegisterPipeline(pipeline)
+	godiator.RegisterHandler(&samples.MyHandler[samples.MyRequest, samples.MyResponse]{})
 
 	// When
-	response, err := Send[samples.MyRequest, samples.MyResponse](request, nil)
+	response, err := godiator.Send[samples.MyRequest, samples.MyResponse](request, nil)
 
 	// Then
 	s.Suite.Nil(err)
@@ -51,12 +52,12 @@ func (s *GodiatorTestSuite) TestGodiatorSend_WithMultiplePipeline() {
 	request := samples.MyRequest{Id: 3}
 	firstPipeline := &samples.LoggingPipeline{}
 	secondPipeline := &samples.LoggingPipeline{}
-	RegisterPipeline(firstPipeline)
-	RegisterPipeline(secondPipeline)
-	RegisterHandler(&samples.MyHandler[samples.MyRequest, samples.MyResponse]{})
+	godiator.RegisterPipeline(firstPipeline)
+	godiator.RegisterPipeline(secondPipeline)
+	godiator.RegisterHandler(&samples.MyHandler[samples.MyRequest, samples.MyResponse]{})
 
 	// When
-	response, err := Send[samples.MyRequest, samples.MyResponse](request, nil)
+	response, err := godiator.Send[samples.MyRequest, samples.MyResponse](request, nil)
 
 	// Then
 	s.Suite.Nil(err)
@@ -76,11 +77,11 @@ func (s *GodiatorTestSuite) TestGodiatorSend_HandlerNotFound() {
 	request := UnregisteredRequest{Value: "test"}
 
 	// When
-	response, err := Send[UnregisteredRequest, samples.MyResponse](request, nil)
+	response, err := godiator.Send[UnregisteredRequest, samples.MyResponse](request, nil)
 
 	// Then
 	s.Suite.NotNil(err)
-	s.Suite.EqualError(err, `handler not found for "godiator.UnregisteredRequest"`)
+	s.Suite.EqualError(err, `handler not found for "tests.UnregisteredRequest"`)
 	s.Suite.Equal(samples.MyResponse{}, response)
 }
 
@@ -88,10 +89,10 @@ func (s *GodiatorTestSuite) TestGodiatorPublish() {
 	// Given
 	request := samples.MySubscriptionRequest{Id: 1}
 	subscriber := &samples.MySubscriptionHandler[samples.MySubscriptionRequest]{}
-	RegisterSubscriber(subscriber)
+	godiator.RegisterSubscriber(subscriber)
 
 	// When
-	Publish[samples.MySubscriptionRequest](request, nil)
+	godiator.Publish[samples.MySubscriptionRequest](request, nil)
 
 	// Then
 	time.Sleep(200 * time.Millisecond)

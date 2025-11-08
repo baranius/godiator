@@ -9,14 +9,14 @@ format:
 
 test: format
 	@echo "$(PROJECTNAME) tests are running"
-	go test -v ./...
+	go test -v ./tests/
 .PHONY: test
 
 test-coverage: format
 	@echo "$(PROJECTNAME) test coverages are running"
 	rm -rf .test-coverage
 	mkdir .test-coverage
-	go test -coverprofile .test-coverage/coverage.out ./...
+	go test -coverprofile .test-coverage/coverage.out -coverpkg=./... ./tests/
 	go tool cover -html=.test-coverage/coverage.out -o .test-coverage/cover.html
 	open .test-coverage/cover.html
 .PHONY: test-coverage
