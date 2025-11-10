@@ -23,15 +23,15 @@ func (s *HandlerCoreTestSuite) TestHandlerActions() {
 
 	h, ok := core.GetHandler[samples.MyRequest, samples.MyResponse]()
 
-	s.Suite.True(ok)
-	s.Suite.NotNil(h)
+	s.True(ok)
+	s.NotNil(h)
 
 	core.RemoveHandler[samples.MyRequest]()
 
 	h, ok = core.GetHandler[samples.MyRequest, samples.MyResponse]()
 
-	s.Suite.False(ok)
-	s.Suite.Nil(h)
+	s.False(ok)
+	s.Nil(h)
 }
 
 type SubscriberCoreTestSuite struct {
@@ -49,14 +49,14 @@ func (s *SubscriberCoreTestSuite) TestSubscriberActions() {
 
 	subscribers := core.GetSubscribers[samples.MySubscriptionRequest]()
 
-	s.Suite.NotNil(subscribers)
-	s.Suite.NotEmpty(subscribers)
+	s.NotNil(subscribers)
+	s.NotEmpty(subscribers)
 
 	core.RemoveSubscriber[samples.MySubscriptionRequest]()
 
 	subscribers = core.GetSubscribers[samples.MySubscriptionRequest]()
 
-	s.Suite.Empty(subscribers)
+	s.Empty(subscribers)
 }
 
 type PipelineCoreTestSuite struct {
@@ -74,12 +74,12 @@ func (s *PipelineCoreTestSuite) TestPipelineActions() {
 
 	pipelines := core.GetPipelines()
 
-	s.Suite.NotNil(pipelines)
-	s.Suite.NotEmpty(pipelines)
+	s.NotNil(pipelines)
+	s.NotEmpty(pipelines)
 
 	core.ClearPipelines()
 
 	pipelines = core.GetPipelines()
 
-	s.Suite.Empty(pipelines)
+	s.Empty(pipelines)
 }

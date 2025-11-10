@@ -16,15 +16,14 @@ func TestRunPipelineTestSuite(t *testing.T) {
 }
 
 func (s *PipelineTestSuite) TestPipelineActions() {
-	pipeline := &pipeline.BasePipeline{}
-	s.Suite.NotNil(pipeline)
+	firstPipeline := &pipeline.BasePipeline{}
+	s.NotNil(firstPipeline)
 
 	nextPipeline := &pipeline.BasePipeline{}
-	pipeline.SetNext(nextPipeline)
+	firstPipeline.SetNext(nextPipeline)
+	s.Equal(nextPipeline, firstPipeline.Next())
 
-	s.Suite.Equal(nextPipeline, pipeline.Next())
-
-	result, err := pipeline.Handle(nil, nil...)
-	s.Suite.Error(err)
-	s.Suite.Nil(result)
+	result, err := firstPipeline.Handle(nil, nil...)
+	s.Error(err)
+	s.Nil(result)
 }

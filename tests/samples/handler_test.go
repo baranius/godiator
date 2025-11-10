@@ -28,23 +28,23 @@ func (s *HandlerIntegrationTestSuite) TestHandlerExecutedSuccesfully() {
 	response, err := godiator.Send[samples.MyRequest, samples.MyResponse](request, nil)
 
 	// Then
-	s.Suite.Nil(err)
-	s.Suite.NotEmpty(response.Name)
-	s.Suite.NotEmpty(response.Status)
+	s.Nil(err)
+	s.NotEmpty(response.Message)
+	s.Equal("Processed successfully", response.Message)
 }
 
 func (s *HandlerIntegrationTestSuite) TestHandlerFailedExecution() {
 	// Given
-	godiator.RegisterHandler(&samples.MyFailedHandler[samples.MyRequest, samples.MyResponse]{})
+	godiator.RegisterHandler(&samples.MyFailedHandler[samples.MyFailedRequest, samples.MyFailedResponse]{})
 
-	request := samples.MyRequest{
-		Id: 1,
+	request := samples.MyFailedRequest{
+		Reason: "Some failure reason",
 	}
 
 	// When
-	response, err := godiator.Send[samples.MyRequest, samples.MyResponse](request, nil)
+	response, err := godiator.Send[samples.MyFailedRequest, samples.MyFailedResponse](request, nil)
 
 	// Then
-	s.Suite.NotNil(err)
-	s.Suite.Empty(response)
+	s.NotNil(err)
+	s.Empty(response.Error)
 }

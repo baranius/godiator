@@ -1,3 +1,9 @@
+// Package core provides the internal registry and management for handlers, subscribers,
+// and pipelines used by the godiator mediator implementation.
+//
+// This package maintains thread-unsafe global state and is intended to be used only
+// through the public API in the godiator package. Direct use of this package is not
+// recommended unless you need low-level control over the mediator's behavior.
 package core
 
 import (
@@ -30,14 +36,27 @@ func (w *subscriberWrapper[TRequest]) Handle(request any, params ...any) {
 	w.subscriber.Handle(request.(TRequest), params...)
 }
 
-// Adds the request model and handler pair
+// AddHandler registers a handler for a specific request and response type pair.
+// Only one handler can be registered per request type. If a handler already exists
+// for the request type, it will be replaced.
+//
+// Type parameters:
+//   - TRequest: The request type that the handler will process
+//   - TResponse: The response type that the handler will return
+//
+// Parameters:
+//   - handler: The handler to register
 func AddHandler[TRequest any, TResponse any](handler interfaces.Handler[TRequest, TResponse]) {
 	wrapper := &handlerWrapper[TRequest, TResponse]{handler}
 	var request TRequest
 	messageHandlers[reflect.TypeOf(request)] = wrapper
 }
 
-// Returns the handler for given request model
+// GetHandler returns a handler wrapper for the specified request and response types.
+//
+// Returns:
+//   - *handlerWrapper[TRequest, TResponse]: The handler wrapper.
+//   - bool: Indicates whether the handler was found.
 func GetHandler[TRequest any, TResponse any]() (*handlerWrapper[TRequest, TResponse], bool) {
 	var request TRequest
 	requestType := reflect.TypeOf(request)
@@ -49,13 +68,23 @@ func GetHandler[TRequest any, TResponse any]() (*handlerWrapper[TRequest, TRespo
 	return handler.(*handlerWrapper[TRequest, TResponse]), true
 }
 
-// Removes the handler for given request interfaces
+// RemoveHandler unregisters the handler for the specified request type.
+//
+// Type parameters:
+//   - TRequest: The request type whose handler should be removed
 func RemoveHandler[TRequest any]() {
 	var request TRequest
 	delete(messageHandlers, reflect.TypeOf(request))
 }
 
-// Registers the request model and handler(s) for fire & forget subscribers
+// AddSubscriber registers one or more subscribers for a specific request type.
+// Subscribers are executed asynchronously when Publish is called.
+//
+// Type parameters:
+//   - TRequest: The request type that the subscribers will process
+//
+// Parameters:
+//   - subscribers: The subscribers to register
 func AddSubscriber[TRequest any](subscribers ...interfaces.Subscriber[TRequest]) {
 	var request TRequest
 	requestType := reflect.TypeOf(request)
@@ -69,7 +98,10 @@ func AddSubscriber[TRequest any](subscribers ...interfaces.Subscriber[TRequest])
 	}
 }
 
-// Returns the subscriber(s) for given request model
+// GetSubscribers returns a list of subscriber wrappers for the specified request type.
+//
+// Returns:
+//   - []subscriberWrapper[TRequest]: The list of subscriber wrappers.
 func GetSubscribers[TRequest any]() []subscriberWrapper[TRequest] {
 	var request TRequest
 	subscribers := messageSubscribers[reflect.TypeOf(request)]
@@ -85,23 +117,34 @@ func GetSubscribers[TRequest any]() []subscriberWrapper[TRequest] {
 	return result
 }
 
-// Removes the handler(s) for given request interfaces
+// RemoveSubscriber unregisters all subscribers for the specified request type.
+//
+// Type parameters:
+//   - TRequest: The request type whose subscribers should be removed
 func RemoveSubscriber[TRequest any]() {
 	var request TRequest
 	delete(messageSubscribers, reflect.TypeOf(request))
 }
 
-// Adds Pipeline
+// AddPipeline registers a pipeline that will be executed before handlers.
+// Pipelines are executed in reverse order of registration (last registered, first executed).
+// Use pipelines for cross-cutting concerns like logging, validation, or authentication.
+//
+// Parameters:
+//   - p: The pipeline to register
 func AddPipeline(p interfaces.Pipeline) {
 	messagePipelines = append(messagePipelines, p)
 }
 
-// Returns all registered pipelines
+// GetPipelines retrieves all registered pipelines.
+//
+// Returns:
+//   - []interfaces.Pipeline: The list of registered pipelines
 func GetPipelines() []interfaces.Pipeline {
 	return messagePipelines
 }
 
-// Removes all defined pipelines
+// ClearPipelines removes all registered pipelines.
 func ClearPipelines() {
 	messagePipelines = make([]interfaces.Pipeline, 0)
 }

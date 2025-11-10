@@ -51,8 +51,7 @@ func (s *MockiatorTestSuite) TestHandlerMocking() {
 	execution := mockiator.OnSend(func(request samples.MyRequest, params ...any) (samples.MyResponse, error) {
 		fmt.Println(request.Id)
 		return samples.MyResponse{
-			Id:   10,
-			Name: "John Doe",
+			Message: "Processed successfully",
 		}, nil
 	})
 
@@ -60,11 +59,10 @@ func (s *MockiatorTestSuite) TestHandlerMocking() {
 	resp, err := HandlerExecuter(input)
 
 	// Then
-	s.Suite.Nil(err)
-	s.Suite.True(execution.IsCalled)
-	s.Suite.Equal(1, execution.TimesCalled)
-	s.Suite.Equal(input, resp.Id)
-	s.Suite.Equal("John Doe", resp.Name)
+	s.Nil(err)
+	s.True(execution.IsCalled)
+	s.Equal(1, execution.TimesCalled)
+	s.Equal("Processed successfully", resp.Message)
 }
 
 func (s *MockiatorTestSuite) TestSubscriberMocking() {
@@ -80,6 +78,6 @@ func (s *MockiatorTestSuite) TestSubscriberMocking() {
 
 	// Then
 	time.Sleep(100 * time.Millisecond)
-	s.Suite.True(execution.IsCalled)
-	s.Suite.Equal(1, execution.TimesCalled)
+	s.True(execution.IsCalled)
+	s.Equal(1, execution.TimesCalled)
 }

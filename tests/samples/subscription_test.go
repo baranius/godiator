@@ -32,7 +32,7 @@ func (s *SubscriberIntegrationTestSuite) TestSubscriberExecution() {
 
 	// Then
 	time.Sleep(200 * time.Millisecond) // Wait for goroutine to complete
-	s.Suite.True(mySubscriber.IsHandlerExecuted)
+	s.True(mySubscriber.IsHandlerExecuted)
 }
 
 func (s *SubscriberIntegrationTestSuite) TestMultipleSubscriberExecution() {
@@ -53,6 +53,6 @@ func (s *SubscriberIntegrationTestSuite) TestMultipleSubscriberExecution() {
 
 	// Then
 	time.Sleep(200 * time.Millisecond) // Wait for goroutine to complete
-	s.Suite.True(mySubscription.IsHandlerExecuted)
-	s.Suite.True(myOtherSubscription.IsHandlerExecuted)
+	s.True(mySubscription.IsHandlerExecuted)
+	s.True(myOtherSubscription.IsHandlerExecuted)
 }

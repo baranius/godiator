@@ -26,8 +26,8 @@ func (s *GodiatorTestSuite) TestGodiatorSend() {
 	response, err := godiator.Send[samples.MyRequest, samples.MyResponse](request, nil)
 
 	// Then
-	s.Suite.Nil(err)
-	s.Suite.Equal(samples.MyResponse{Id: 1, Name: "John Doe", Status: "Unknown"}, response)
+	s.Nil(err)
+	s.Equal(samples.MyResponse{Message: "Processed successfully"}, response)
 }
 
 func (s *GodiatorTestSuite) TestGodiatorSend_WithPipeline() {
@@ -41,10 +41,10 @@ func (s *GodiatorTestSuite) TestGodiatorSend_WithPipeline() {
 	response, err := godiator.Send[samples.MyRequest, samples.MyResponse](request, nil)
 
 	// Then
-	s.Suite.Nil(err)
-	s.Suite.Equal(samples.MyResponse{Id: 2, Name: "John Doe", Status: "Unknown"}, response)
-	s.Suite.Empty(pipeline.ErrorMessage)
-	s.Suite.Equal(`request ({"Id":2}) | response ({"Id":2,"Name":"John Doe","Status":"Unknown"})`, pipeline.LogMessage)
+	s.Nil(err)
+	s.Equal(samples.MyResponse{Message: "Processed successfully"}, response)
+	s.Empty(pipeline.ErrorMessage)
+	s.Equal(`request ({"Id":2}) | response ({"Message":"Processed successfully"})`, pipeline.LogMessage)
 }
 
 func (s *GodiatorTestSuite) TestGodiatorSend_WithMultiplePipeline() {
@@ -60,12 +60,12 @@ func (s *GodiatorTestSuite) TestGodiatorSend_WithMultiplePipeline() {
 	response, err := godiator.Send[samples.MyRequest, samples.MyResponse](request, nil)
 
 	// Then
-	s.Suite.Nil(err)
-	s.Suite.Equal(samples.MyResponse{Id: 3, Name: "John Doe", Status: "Unknown"}, response)
-	s.Suite.Empty(secondPipeline.ErrorMessage)
-	s.Suite.Equal(`request ({"Id":3}) | response ({"Id":3,"Name":"John Doe","Status":"Unknown"})`, secondPipeline.LogMessage)
-	s.Suite.Empty(firstPipeline.ErrorMessage)
-	s.Suite.Equal(`request ({"Id":3}) | response ({"Id":3,"Name":"John Doe","Status":"Unknown"})`, firstPipeline.LogMessage)
+	s.Nil(err)
+	s.Equal(samples.MyResponse{Message: "Processed successfully"}, response)
+	s.Empty(secondPipeline.ErrorMessage)
+	s.Equal(`request ({"Id":3}) | response ({"Message":"Processed successfully"})`, secondPipeline.LogMessage)
+	s.Empty(firstPipeline.ErrorMessage)
+	s.Equal(`request ({"Id":3}) | response ({"Message":"Processed successfully"})`, firstPipeline.LogMessage)
 }
 
 type UnregisteredRequest struct {
@@ -80,9 +80,9 @@ func (s *GodiatorTestSuite) TestGodiatorSend_HandlerNotFound() {
 	response, err := godiator.Send[UnregisteredRequest, samples.MyResponse](request, nil)
 
 	// Then
-	s.Suite.NotNil(err)
-	s.Suite.EqualError(err, `handler not found for "tests.UnregisteredRequest"`)
-	s.Suite.Equal(samples.MyResponse{}, response)
+	s.NotNil(err)
+	s.EqualError(err, `handler not found for "tests.UnregisteredRequest"`)
+	s.Equal(samples.MyResponse{}, response)
 }
 
 func (s *GodiatorTestSuite) TestGodiatorPublish() {
@@ -96,5 +96,5 @@ func (s *GodiatorTestSuite) TestGodiatorPublish() {
 
 	// Then
 	time.Sleep(200 * time.Millisecond)
-	s.Suite.True(subscriber.IsHandlerExecuted)
+	s.True(subscriber.IsHandlerExecuted)
 }
