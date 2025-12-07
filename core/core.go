@@ -1,18 +1,20 @@
 // Package core provides the internal registry and management for handlers, subscribers,
 // and pipelines used by the godiator mediator implementation.
 //
-// This package maintains thread-unsafe global state and is intended to be used only
+// This package maintains a thread-safe global state and is intended to be used only
 // through the public API in the godiator package. Direct use of this package is not
 // recommended unless you need low-level control over the mediator's behavior.
 package core
 
 import (
 	"reflect"
+	"sync"
 
 	"github.com/baranius/godiator/core/interfaces"
 )
 
 var (
+	mu                 sync.RWMutex
 	messageHandlers    = make(map[reflect.Type]interfaces.Handler[any, any])
 	messageSubscribers = make(map[reflect.Type][]interfaces.Subscriber[any])
 	messagePipelines   = make([]interfaces.Pipeline, 0)
@@ -47,6 +49,9 @@ func (w *subscriberWrapper[TRequest]) Handle(request any, params ...any) {
 // Parameters:
 //   - handler: The handler to register
 func AddHandler[TRequest any, TResponse any](handler interfaces.Handler[TRequest, TResponse]) {
+	mu.Lock()
+	defer mu.Unlock()
+
 	wrapper := &handlerWrapper[TRequest, TResponse]{handler}
 	var request TRequest
 	messageHandlers[reflect.TypeOf(request)] = wrapper
@@ -58,6 +63,9 @@ func AddHandler[TRequest any, TResponse any](handler interfaces.Handler[TRequest
 //   - *handlerWrapper[TRequest, TResponse]: The handler wrapper.
 //   - bool: Indicates whether the handler was found.
 func GetHandler[TRequest any, TResponse any]() (*handlerWrapper[TRequest, TResponse], bool) {
+	mu.RLock()
+	defer mu.RUnlock()
+
 	var request TRequest
 	requestType := reflect.TypeOf(request)
 	handler := messageHandlers[requestType]
@@ -77,6 +85,9 @@ func GetHandler[TRequest any, TResponse any]() (*handlerWrapper[TRequest, TRespo
 // Type parameters:
 //   - TRequest: The request type whose handler should be removed
 func RemoveHandler[TRequest any]() {
+	mu.Lock()
+	defer mu.Unlock()
+
 	var request TRequest
 	delete(messageHandlers, reflect.TypeOf(request))
 }
@@ -90,6 +101,9 @@ func RemoveHandler[TRequest any]() {
 // Parameters:
 //   - subscribers: The subscribers to register
 func AddSubscriber[TRequest any](subscribers ...interfaces.Subscriber[TRequest]) {
+	mu.Lock()
+	defer mu.Unlock()
+
 	var request TRequest
 	requestType := reflect.TypeOf(request)
 	for _, s := range subscribers {
@@ -107,6 +121,9 @@ func AddSubscriber[TRequest any](subscribers ...interfaces.Subscriber[TRequest])
 // Returns:
 //   - []subscriberWrapper[TRequest]: The list of subscriber wrappers.
 func GetSubscribers[TRequest any]() []subscriberWrapper[TRequest] {
+	mu.RLock()
+	defer mu.RUnlock()
+
 	var request TRequest
 	subscribers := messageSubscribers[reflect.TypeOf(request)]
 	result := make([]subscriberWrapper[TRequest], 0)
@@ -126,6 +143,9 @@ func GetSubscribers[TRequest any]() []subscriberWrapper[TRequest] {
 // Type parameters:
 //   - TRequest: The request type whose subscribers should be removed
 func RemoveSubscriber[TRequest any]() {
+	mu.Lock()
+	defer mu.Unlock()
+
 	var request TRequest
 	delete(messageSubscribers, reflect.TypeOf(request))
 }
@@ -137,6 +157,9 @@ func RemoveSubscriber[TRequest any]() {
 // Parameters:
 //   - p: The pipeline to register
 func AddPipeline(p interfaces.Pipeline) {
+	mu.Lock()
+	defer mu.Unlock()
+
 	messagePipelines = append(messagePipelines, p)
 }
 
@@ -145,10 +168,16 @@ func AddPipeline(p interfaces.Pipeline) {
 // Returns:
 //   - []interfaces.Pipeline: The list of registered pipelines
 func GetPipelines() []interfaces.Pipeline {
+	mu.RLock()
+	defer mu.RUnlock()
+
 	return messagePipelines
 }
 
 // ClearPipelines removes all registered pipelines.
 func ClearPipelines() {
+	mu.Lock()
+	defer mu.Unlock()
+
 	messagePipelines = make([]interfaces.Pipeline, 0)
 }
