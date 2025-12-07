@@ -19,7 +19,8 @@ type ConcResponse struct {
 type ConcHandler struct{}
 
 func (h *ConcHandler) Handle(req ConcRequest, params ...any) (ConcResponse, error) {
-	return ConcResponse{ID: req.ID}, nil
+	id := req.ID
+	return ConcResponse{ID: id}, nil
 }
 
 func TestConcurrency(t *testing.T) {

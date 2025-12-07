@@ -31,7 +31,7 @@ func (s *PipelineIntegrationTestSuite) TestPipelineInterceptedSuccesfully() {
 	s.NoError(err)
 	s.NotNil(response)
 	s.Equal("", loggingPipeline.ErrorMessage)
-	s.Equal(`request ({"ID":1}) | response ({"ID":1,"Message":"Processed successfully"})`, loggingPipeline.LogMessage)
+	s.Equal(`request ({"Id":1}) | response ({"Message":"Processed successfully"})`, loggingPipeline.LogMessage)
 }
 
 func (s *PipelineIntegrationTestSuite) TestPipelineHandlesErrorSuccesfully() {

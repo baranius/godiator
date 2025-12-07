@@ -9,7 +9,7 @@ format:
 
 test: format
 	@echo "$(PROJECTNAME) tests are running"
-	go test -v ./tests/
+	go test -v ./tests/...
 .PHONY: test
 
 test-coverage: format
