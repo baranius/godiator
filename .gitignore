@@ -3,6 +3,7 @@
 
 # Binaries for programs and plugins
 *.exe
+*.exe~
 *.dll
 *.so
 *.dylib
@@ -12,15 +13,23 @@
 
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
+.test-coverage/
 
-# Project-local glide cache, RE: https://github.com/Masterminds/glide/issues/736
-.glide/
+# Dependency directories
+vendor/
+
+# Go workspace file
+go.work
 
 # IDE specific folders
-.idea
-.vscode
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
 
-# Test coverage folders
-.test-coverage
+# OS files
+.DS_Store
+Thumbs.db
 
 TODO.md

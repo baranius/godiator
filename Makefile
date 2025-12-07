@@ -20,3 +20,8 @@ test-coverage: format
 	go tool cover -html=.test-coverage/coverage.out -o .test-coverage/cover.html
 	open .test-coverage/cover.html
 .PHONY: test-coverage
+
+lint:
+	@echo "$(PROJECTNAME) linting is running"
+	golangci-lint run ./...
+.PHONY: lint
