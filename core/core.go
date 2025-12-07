@@ -65,7 +65,11 @@ func GetHandler[TRequest any, TResponse any]() (*handlerWrapper[TRequest, TRespo
 		return nil, false
 	}
 
-	return handler.(*handlerWrapper[TRequest, TResponse]), true
+	if handler, ok := handler.(*handlerWrapper[TRequest, TResponse]); ok {
+		return handler, true
+	}
+
+	return nil, false
 }
 
 // RemoveHandler unregisters the handler for the specified request type.
