@@ -1,3 +1,4 @@
+// Test Suite for Pipeline
 package tests
 
 import (
@@ -7,14 +8,17 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
+// Pipeline Test Suite
 type PipelineTestSuite struct {
 	suite.Suite
 }
 
+// Run Pipeline Test Suite
 func TestRunPipelineTestSuite(t *testing.T) {
 	suite.Run(t, new(PipelineTestSuite))
 }
 
+// Test Pipeline Actions
 func (s *PipelineTestSuite) TestPipelineActions() {
 	firstPipeline := &pipeline.BasePipeline{}
 	s.NotNil(firstPipeline)

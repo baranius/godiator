@@ -1,3 +1,4 @@
+// Test Suite for Godiator
 package tests
 
 import (
@@ -13,10 +14,12 @@ type GodiatorTestSuite struct {
 	suite.Suite
 }
 
+// Run Godiator Test Suite
 func TestGodiatorTestSuite(t *testing.T) {
 	suite.Run(t, new(GodiatorTestSuite))
 }
 
+// Test Godiator Send
 func (s *GodiatorTestSuite) TestGodiatorSend() {
 	// Given
 	request := samples.MyRequest{Id: 1}
@@ -30,6 +33,7 @@ func (s *GodiatorTestSuite) TestGodiatorSend() {
 	s.Equal(samples.MyResponse{Message: "Processed successfully"}, response)
 }
 
+// Test Godiator Send with Pipeline
 func (s *GodiatorTestSuite) TestGodiatorSend_WithPipeline() {
 	// Given
 	request := samples.MyRequest{Id: 2}
@@ -47,6 +51,7 @@ func (s *GodiatorTestSuite) TestGodiatorSend_WithPipeline() {
 	s.Equal(`request ({"Id":2}) | response ({"Message":"Processed successfully"})`, pipeline.LogMessage)
 }
 
+// Test Godiator Send with Multiple Pipeline
 func (s *GodiatorTestSuite) TestGodiatorSend_WithMultiplePipeline() {
 	// Given
 	request := samples.MyRequest{Id: 3}
@@ -68,10 +73,12 @@ func (s *GodiatorTestSuite) TestGodiatorSend_WithMultiplePipeline() {
 	s.Equal(`request ({"Id":3}) | response ({"Message":"Processed successfully"})`, firstPipeline.LogMessage)
 }
 
+// Define an unregistered request type
 type UnregisteredRequest struct {
 	Value string
 }
 
+// Test Godiator Send with Handler Not Found
 func (s *GodiatorTestSuite) TestGodiatorSend_HandlerNotFound() {
 	// Given
 	request := UnregisteredRequest{Value: "test"}
@@ -85,6 +92,7 @@ func (s *GodiatorTestSuite) TestGodiatorSend_HandlerNotFound() {
 	s.Equal(samples.MyResponse{}, response)
 }
 
+// Test Godiator Publish
 func (s *GodiatorTestSuite) TestGodiatorPublish() {
 	// Given
 	request := samples.MySubscriptionRequest{Id: 1}

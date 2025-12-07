@@ -1,7 +1,7 @@
+// Test Suite for Mockiator
 package tests
 
 import (
-	"fmt"
 	"testing"
 	"time"
 
@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-// Define an executer
+// Define an executer to run the handler
 func HandlerExecuter(id int) (samples.MyResponse, error) {
 	request := samples.MyRequest{Id: id}
 
@@ -23,16 +23,16 @@ type (
 	SubscriberRequest struct {
 		Id int
 	}
-	SubscriberHandler[S1 SubscriberRequest] struct{}
+	SubscriberHandler[TRequest SubscriberRequest] struct{}
 )
 
-func (h *SubscriberHandler[S1]) Handle(request SubscriberRequest, params ...any) {}
+func (h *SubscriberHandler[TRequest]) Handle(request TRequest, params ...any) {}
 
-// Define an executer
+// Define an executer to run the subscriber
 func SubscriberExecuter(id int) {
 	request := SubscriberRequest{Id: id}
 
-	godiator.Publish[SubscriberRequest](request, nil)
+	godiator.Publish(request, nil)
 }
 
 // Execute Mocking Test
@@ -40,16 +40,17 @@ type MockiatorTestSuite struct {
 	suite.Suite
 }
 
+// Mockiator Test Suite
 func TestMockiatorTestSuite(t *testing.T) {
 	suite.Run(t, new(MockiatorTestSuite))
 }
 
+// Test Handler Mocking
 func (s *MockiatorTestSuite) TestHandlerMocking() {
 	// Given
 	input := 10
 
 	execution := mockiator.OnSend(func(request samples.MyRequest, params ...any) (samples.MyResponse, error) {
-		fmt.Println(request.Id)
 		return samples.MyResponse{
 			Message: "Processed successfully",
 		}, nil
@@ -65,6 +66,7 @@ func (s *MockiatorTestSuite) TestHandlerMocking() {
 	s.Equal("Processed successfully", resp.Message)
 }
 
+// Test Subscriber Mocking
 func (s *MockiatorTestSuite) TestSubscriberMocking() {
 	// Given
 	input := 10

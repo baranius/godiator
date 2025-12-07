@@ -1,3 +1,4 @@
+// Package tests provides test cases for the godiator library.
 package tests
 
 import (
@@ -12,14 +13,13 @@ type HandlerCoreTestSuite struct {
 	suite.Suite
 }
 
+// Core Handler Test Suite
 func TestRunHandlerCoreTestSuite(t *testing.T) {
 	suite.Run(t, new(HandlerCoreTestSuite))
 }
 
-func (s *HandlerCoreTestSuite) TestHandlerActions() {
-	handler := samples.MyHandler[samples.MyRequest, samples.MyResponse]{}
-
-	core.AddHandler[samples.MyRequest, samples.MyResponse](&handler)
+func (s *HandlerCoreTestSuite) TestHandlerRegisteryActions() {
+	core.AddHandler(&samples.MyHandler[samples.MyRequest, samples.MyResponse]{})
 
 	h, ok := core.GetHandler[samples.MyRequest, samples.MyResponse]()
 
@@ -34,6 +34,7 @@ func (s *HandlerCoreTestSuite) TestHandlerActions() {
 	s.Nil(h)
 }
 
+// Core Subscriber Test Suite
 type SubscriberCoreTestSuite struct {
 	suite.Suite
 }
@@ -42,10 +43,8 @@ func TestRunSubscriberCoreTestSuite(t *testing.T) {
 	suite.Run(t, new(SubscriberCoreTestSuite))
 }
 
-func (s *SubscriberCoreTestSuite) TestSubscriberActions() {
-	subscriber := samples.MySubscriptionHandler[samples.MySubscriptionRequest]{}
-
-	core.AddSubscriber[samples.MySubscriptionRequest](&subscriber)
+func (s *SubscriberCoreTestSuite) TestSubscriberRegisteryActions() {
+	core.AddSubscriber(&samples.MySubscriptionHandler[samples.MySubscriptionRequest]{})
 
 	subscribers := core.GetSubscribers[samples.MySubscriptionRequest]()
 
@@ -59,6 +58,7 @@ func (s *SubscriberCoreTestSuite) TestSubscriberActions() {
 	s.Empty(subscribers)
 }
 
+// Core Pipeline Test Suite
 type PipelineCoreTestSuite struct {
 	suite.Suite
 }
@@ -67,7 +67,7 @@ func TestRunPipelineCoreTestSuite(t *testing.T) {
 	suite.Run(t, new(PipelineCoreTestSuite))
 }
 
-func (s *PipelineCoreTestSuite) TestPipelineActions() {
+func (s *PipelineCoreTestSuite) TestPipelineRegisteryActions() {
 	pipeline := &samples.LoggingPipeline{}
 
 	core.AddPipeline(pipeline)
